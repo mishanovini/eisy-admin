@@ -149,6 +149,9 @@ export async function sendChatMessage(userMessage: string): Promise<string> {
       return `Bad request (HTTP 400). The selected model may not support this request format. Try a different model.`;
     }
     if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
+      if (import.meta.env.PROD && provider === 'openai') {
+        return 'OpenAI blocks browser CORS requests to their chat API. When running from the eisy, use Claude or Gemini instead (both support browser access), or configure a custom proxy URL in Settings.';
+      }
       return `Network error: Could not reach the ${provider} API. This may be a CORS restriction with browser-based access.`;
     }
     if (msg.includes('404')) {
@@ -270,8 +273,12 @@ async function callOpenAI(
   model: string,
   proxyUrl: string,
 ): Promise<string> {
-  // Use the Vite dev proxy to bypass CORS (OpenAI blocks browser access to /v1/chat/completions)
-  const url = proxyUrl || '/openai-api/v1/chat/completions';
+  // Dev: Vite proxy. Prod: try direct (CORS may block chat/completions).
+  // Users can specify a custom proxy URL in settings to work around this.
+  const defaultUrl = import.meta.env.DEV
+    ? '/openai-api/v1/chat/completions'
+    : 'https://api.openai.com/v1/chat/completions';
+  const url = proxyUrl || defaultUrl;
 
   const openaiMessages = [
     { role: 'system', content: system },

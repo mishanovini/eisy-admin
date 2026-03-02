@@ -140,8 +140,9 @@ async function fetchClaudeModels(apiKey: string): Promise<ModelOption[]> {
 
 /** Fetch models from OpenAI API — filters to chat-capable models */
 async function fetchOpenAIModels(apiKey: string): Promise<ModelOption[]> {
-  // Use Vite dev proxy to bypass CORS (OpenAI blocks some browser requests)
-  const res = await fetch('/openai-api/v1/models', {
+  // Dev: Vite proxy (/openai-api → api.openai.com). Prod: direct (may fail CORS).
+  const baseUrl = import.meta.env.DEV ? '/openai-api' : 'https://api.openai.com';
+  const res = await fetch(`${baseUrl}/v1/models`, {
     headers: { 'Authorization': `Bearer ${apiKey}` },
   });
   if (!res.ok) throw new Error(`OpenAI ${res.status}`);

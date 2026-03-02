@@ -27,6 +27,11 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .cache
 *.tsbuildinfo
 
+# TypeScript build artifacts from vite.config.ts
+vite.config.d.ts
+vite.config.d.ts.map
+vite.config.js
+
 # IntelliJ based IDEs
 .idea
 

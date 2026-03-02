@@ -71,7 +71,7 @@ function wsProxyPlugin(): Plugin {
             let upstreamReady = false;
 
             // Step 2: Connect to eisy upstream (async)
-            const upstream = new NodeWS(upstreamUrl, protocol ? protocol.split(',').map(s => s.trim()) : [], {
+            const upstream = new NodeWS(upstreamUrl, protocol ? protocol.split(',').map((s: string) => s.trim()) : [], {
               agent: new https.Agent({ rejectUnauthorized: false }),
               headers: {
                 Authorization: req.headers.authorization || EISY_AUTH,

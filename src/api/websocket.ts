@@ -11,6 +11,7 @@ import type { WsEvent, WsEventType, IsyProperty } from './types.ts';
 import { useStatusStore } from '@/stores/status-store.ts';
 import { useLogStore } from '@/stores/log-store.ts';
 import { useDeviceStore } from '@/stores/device-store.ts';
+import { useProgramStore } from '@/stores/program-store.ts';
 
 type WsListener = (event: WsEvent) => void;
 
@@ -167,10 +168,14 @@ function parseWsEvent(xmlText: string): WsEvent | null {
       };
       const programAction = statusMap[actionStr] ?? `state changed (${actionStr})`;
 
+      // Resolve program name from the program store (node is the program hex ID)
+      const programInfo = useProgramStore.getState().getProgram(String(node));
+      const programName = programInfo?.name ?? `Program ${node}`;
+
       useLogStore.getState().addEntry({
         category: 'program',
         device: node,
-        deviceName: `Program ${node}`,
+        deviceName: programName,
         action: programAction,
         source: 'system',
         result: 'success',

@@ -64,11 +64,13 @@ export interface SpokenNodePayload {
 // ─── Constants ────────────────────────────────────────────────
 
 /**
- * Portal API base path. Uses the Vite dev proxy (/portal-api → my.isy.io/api)
- * to bypass the portal's broken CORS preflight handler (OPTIONS returns 500).
- * In production, this would need a server-side proxy or the portal to fix their CORS.
+ * Portal API base path.
+ * - Dev mode: Uses Vite proxy (/portal-api → my.isy.io/api) to bypass broken CORS preflight.
+ * - Production: Tries https://my.isy.io/api directly; falls back to CORS error message.
+ *   The ISY Portal OPTIONS handler returns 500, so preflight-required requests fail.
+ *   Simple requests (no custom headers) might work if the portal sends ACAO: *.
  */
-const PORTAL_BASE = '/portal-api';
+const PORTAL_BASE = import.meta.env.DEV ? '/portal-api' : 'https://my.isy.io/api';
 const TIMEOUT_MS = 15_000;
 
 // ─── Internal helpers ─────────────────────────────────────────
@@ -144,6 +146,16 @@ async function portalFetch<T>(
   } catch (err) {
     clearTimeout(timeoutId);
     const message = err instanceof Error ? err.message : String(err);
+    // In production, CORS preflight to my.isy.io fails (their OPTIONS returns 500).
+    // Provide a clear explanation instead of a cryptic "Failed to fetch".
+    if (import.meta.env.PROD && message.includes('fetch')) {
+      return {
+        ok: false,
+        status: 0,
+        data: null,
+        error: 'Portal connection unavailable — the ISY Portal (my.isy.io) blocks browser CORS requests. Use the dev server (bun run dev) for voice control features.',
+      };
+    }
     return { ok: false, status: 0, data: null, error: message };
   }
 }
