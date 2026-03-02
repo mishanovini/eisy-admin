@@ -168,15 +168,34 @@ export function NotificationSettings() {
       const resp = await soapCall('GetSMTPConfig', SOAP_SERVICE.INSTEON, '');
       if (resp.ok && resp.raw) {
         const raw = resp.raw;
-        setSmtp({
-          server: extractXmlValue(raw, 'SMTPServer') || extractXmlValue(raw, 'host') || '',
-          port: extractXmlValue(raw, 'Port') || extractXmlValue(raw, 'port') || '587',
-          username: extractXmlValue(raw, 'UID') || extractXmlValue(raw, 'uid') || '',
-          password: extractXmlValue(raw, 'PWD') || extractXmlValue(raw, 'pwd') || '',
-          from: extractXmlValue(raw, 'From') || extractXmlValue(raw, 'from') || '',
-          timeout: extractXmlValue(raw, 'Timeout') || extractXmlValue(raw, 'timeout') || '30',
-          useTLS: (extractXmlValue(raw, 'UseTLS') || extractXmlValue(raw, 'tls') || '1') === '1',
-        });
+        // eisy returns tags like SMTPServer, SMTPPort, SMTPUID, SMTPPWD, SMTPFrom, SMTPTimeout, UseTLS
+        const loadedServer = extractXmlValue(raw, 'SMTPServer') || '';
+        const loadedPort = extractXmlValue(raw, 'SMTPPort') || extractXmlValue(raw, 'Port') || '';
+        const loadedUid = extractXmlValue(raw, 'SMTPUID') || extractXmlValue(raw, 'UID') || '';
+        const loadedPwd = extractXmlValue(raw, 'SMTPPWD') || extractXmlValue(raw, 'PWD') || '';
+        const loadedFrom = extractXmlValue(raw, 'SMTPFrom') || extractXmlValue(raw, 'From') || '';
+        const loadedTimeout = extractXmlValue(raw, 'SMTPTimeout') || extractXmlValue(raw, 'Timeout') || '';
+        const loadedTls = extractXmlValue(raw, 'UseTLS') || '';
+
+        // Only update fields that have actual values from the device
+        // (empty strings from eisy mean "not configured" — keep our defaults)
+        setSmtp((prev) => ({
+          server: loadedServer || prev.server,
+          port: loadedPort || prev.port,
+          username: loadedUid || prev.username,
+          password: loadedPwd || prev.password,
+          from: loadedFrom || prev.from,
+          // eisy returns timeout in milliseconds (5000), convert to seconds for UI
+          timeout: loadedTimeout
+            ? String(Math.round(Number(loadedTimeout) >= 100 ? Number(loadedTimeout) / 1000 : Number(loadedTimeout)))
+            : prev.timeout,
+          useTLS: loadedTls ? loadedTls === 'true' || loadedTls === '1' : prev.useTLS,
+        }));
+        // Auto-detect provider preset from loaded SMTP server
+        if (loadedServer) {
+          const matchIdx = SMTP_PRESETS.findIndex((p) => p.server === loadedServer);
+          if (matchIdx >= 0) setPresetIdx(matchIdx);
+        }
       }
     } catch {
       // Config might not exist yet — leave defaults
@@ -237,14 +256,15 @@ export function NotificationSettings() {
   const handleSaveSMTP = async () => {
     setSmtpFeedback({ status: 'loading', message: 'Saving SMTP configuration...' });
     try {
+      // Use the exact tag names the eisy expects (matched from GetSMTPConfig response)
       const innerXml = `
         <SMTPServer>${smtp.server}</SMTPServer>
-        <Port>${smtp.port}</Port>
-        <UID>${smtp.username}</UID>
-        <PWD>${smtp.password}</PWD>
-        <From>${smtp.from}</From>
-        <Timeout>${smtp.timeout}</Timeout>
-        <UseTLS>${smtp.useTLS ? '1' : '0'}</UseTLS>`;
+        <SMTPPort>${smtp.port}</SMTPPort>
+        <SMTPUID>${smtp.username}</SMTPUID>
+        <SMTPPWD>${smtp.password}</SMTPPWD>
+        <SMTPFrom>${smtp.from}</SMTPFrom>
+        <SMTPTimeout>${Number(smtp.timeout) * 1000}</SMTPTimeout>
+        <UseTLS>${smtp.useTLS ? 'true' : 'false'}</UseTLS>`;
 
       const resp = await soapCall('SetSMTPConfig', SOAP_SERVICE.INSTEON, innerXml);
       if (resp.ok) {
@@ -413,6 +433,8 @@ export function NotificationSettings() {
                   </label>
                   <input
                     type="text"
+                    name="smtp-username"
+                    autoComplete="smtp-username"
                     value={smtp.username}
                     onChange={(e) => setSmtp((s) => ({ ...s, username: e.target.value }))}
                     placeholder="user@example.com"
@@ -426,6 +448,8 @@ export function NotificationSettings() {
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
+                      name="smtp-password"
+                      autoComplete="smtp-password"
                       value={smtp.password}
                       onChange={(e) => setSmtp((s) => ({ ...s, password: e.target.value }))}
                       placeholder="App password or SMTP password"

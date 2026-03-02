@@ -174,6 +174,14 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // OpenAI API proxy — OpenAI blocks CORS on /v1/chat/completions from browsers.
+      // The models endpoint works, but chat/completions doesn't send CORS headers.
+      '/openai-api': {
+        target: 'https://api.openai.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p: string) => p.replace(/^\/openai-api/, ''),
+      },
       // ISY Portal proxy — avoids CORS preflight failure (my.isy.io OPTIONS returns 500)
       '/portal-api': {
         target: 'https://my.isy.io',

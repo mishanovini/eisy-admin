@@ -15,6 +15,41 @@ import type { IsyNode, IsyProperty } from '@/api/types.ts';
 /** Stable empty Map — avoids creating new references in selectors. */
 const EMPTY_PROPS: NodeProperties = new Map();
 
+/** Translate raw ISY command codes into human-readable action descriptions. */
+function humanizeCommand(command: string, value: number | undefined, category: string): string {
+  switch (command) {
+    case CMD.DON:
+    case 'DFON': {
+      if (value === undefined || value === 255) return 'Turn On';
+      const pct = Math.round((value / 255) * 100);
+      return category === 'dimmer' ? `Dim to ${pct}%` : `Turn On (${pct}%)`;
+    }
+    case CMD.DOF:
+    case 'DFOF':
+      return 'Turn Off';
+    case CMD.LOCK:
+      return 'Lock';
+    case CMD.UNLOCK:
+      return 'Unlock';
+    case 'BRT':
+      return 'Brighten';
+    case 'DIM':
+      return 'Dim';
+    case 'QUERY':
+      return 'Query Status';
+    case 'BEEP':
+      return 'Beep';
+    case 'FDUP':
+      return 'Fan Speed Up';
+    case 'FDDOWN':
+      return 'Fan Speed Down';
+    case 'FDSTOP':
+      return 'Fan Stop';
+    default:
+      return value !== undefined ? `${command} ${value}` : command;
+  }
+}
+
 export interface DeviceProperty {
   id: string;
   name: string;
@@ -124,7 +159,7 @@ export function useDevice(address: string): UseDeviceResult | null {
       category: 'command',
       device: address,
       deviceName: node.name,
-      action: `${command}${value !== undefined ? ` ${value}` : ''}`,
+      action: humanizeCommand(command, value, category),
       source: 'manual',
       result: ok ? 'success' : 'fail',
       rawCommand: `/rest/nodes/${address}/cmd/${command}${value !== undefined ? `/${value}` : ''}`,

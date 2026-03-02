@@ -3,6 +3,7 @@
  *
  * Displays all spoken entries grouped by room, with inline editing,
  * search/filter, and sync-to-Google-Home button.
+ * Uses AddSpokenModal for the 3-step device picker flow.
  */
 import { useState, useMemo, useCallback } from 'react';
 import {
@@ -21,9 +22,9 @@ import {
 } from 'lucide-react';
 import { usePortalStore } from '@/stores/portal-store.ts';
 import type { PortalSpokenNode, SpokenNodePayload } from '@/stores/portal-store.ts';
-import { useDeviceStore } from '@/stores/device-store.ts';
 import { useConfirm } from '@/hooks/useConfirm.ts';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog.tsx';
+import { AddSpokenModal } from './AddSpokenModal.tsx';
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -35,14 +36,6 @@ const USER_CAT_OPTIONS: { value: string; label: string }[] = [
   { value: 'lock', label: 'Lock' },
   { value: 'scene', label: 'Scene' },
   { value: 'openClose', label: 'Open/Close' },
-];
-
-const CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'std', label: 'Standard' },
-  { value: 'scene', label: 'Scene' },
-  { value: 'lock', label: 'Lock' },
-  { value: 'program', label: 'Program' },
-  { value: 'statevar', label: 'State Variable' },
 ];
 
 // ─── Types ────────────────────────────────────────────────────
@@ -178,11 +171,11 @@ export function PortalSpokenList() {
   if (!credentials) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col">
       <ConfirmDialog {...dialogProps} />
 
       {/* Header bar */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 pb-2">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -226,13 +219,13 @@ export function PortalSpokenList() {
       </div>
 
       {syncResult && (
-        <p className={`text-xs font-medium ${syncResult.includes('failed') ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+        <p className={`pb-1 text-xs font-medium ${syncResult.includes('failed') ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
           {syncResult}
         </p>
       )}
 
       {/* Stats */}
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className="pb-2 text-xs text-gray-500 dark:text-gray-400">
         {spokens.length} spoken {spokens.length === 1 ? 'entry' : 'entries'} · {rooms.length} rooms
         {search && ` · ${filtered.length} matching`}
       </p>
@@ -254,58 +247,55 @@ export function PortalSpokenList() {
         </div>
       )}
 
-      {/* Grouped entries */}
-      {grouped.map(([roomName, nodes]) => (
-        <div key={roomName} className="rounded-xl border border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => toggleRoom(roomName)}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50"
-          >
-            {collapsedRooms.has(roomName) ? (
-              <ChevronRight size={14} className="text-gray-400" />
-            ) : (
-              <ChevronDown size={14} className="text-gray-400" />
+      {/* Scrollable grouped entries */}
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+        {grouped.map(([roomName, nodes]) => (
+          <div key={roomName} className="rounded-xl border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => toggleRoom(roomName)}
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50"
+            >
+              {collapsedRooms.has(roomName) ? (
+                <ChevronRight size={14} className="text-gray-400" />
+              ) : (
+                <ChevronDown size={14} className="text-gray-400" />
+              )}
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{roomName}</span>
+              <span className="text-xs text-gray-400">({nodes.length})</span>
+            </button>
+
+            {!collapsedRooms.has(roomName) && (
+              <div className="border-t border-gray-100 dark:border-gray-800">
+                {nodes.map((node) => (
+                  <SpokenRow
+                    key={node._id}
+                    node={node}
+                    editing={editing?.id === node._id ? editing : null}
+                    rooms={rooms}
+                    onEdit={() => startEdit(node)}
+                    onSave={() => saveEdit(node)}
+                    onCancel={() => setEditing(null)}
+                    onDelete={() => handleDelete(node)}
+                    onSpokenChange={(idx, val) => {
+                      setEditing((e) => {
+                        if (!e) return null;
+                        const spoken = [...e.spoken];
+                        spoken[idx] = val;
+                        return { ...e, spoken };
+                      });
+                    }}
+                    onRoomChange={(room) => setEditing((e) => e && { ...e, room })}
+                    onCatChange={(userCat) => setEditing((e) => e && { ...e, userCat })}
+                  />
+                ))}
+              </div>
             )}
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{roomName}</span>
-            <span className="text-xs text-gray-400">({nodes.length})</span>
-          </button>
+          </div>
+        ))}
+      </div>
 
-          {!collapsedRooms.has(roomName) && (
-            <div className="border-t border-gray-100 dark:border-gray-800">
-              {nodes.map((node) => (
-                <SpokenRow
-                  key={node._id}
-                  node={node}
-                  editing={editing?.id === node._id ? editing : null}
-                  rooms={rooms}
-                  onEdit={() => startEdit(node)}
-                  onSave={() => saveEdit(node)}
-                  onCancel={() => setEditing(null)}
-                  onDelete={() => handleDelete(node)}
-                  onSpokenChange={(idx, val) => {
-                    setEditing((e) => {
-                      if (!e) return null;
-                      const spoken = [...e.spoken];
-                      spoken[idx] = val;
-                      return { ...e, spoken };
-                    });
-                  }}
-                  onRoomChange={(room) => setEditing((e) => e && { ...e, room })}
-                  onCatChange={(userCat) => setEditing((e) => e && { ...e, userCat })}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-
-      {/* Add entry form */}
-      {showAdd && (
-        <AddSpokenForm
-          rooms={rooms}
-          onClose={() => setShowAdd(false)}
-        />
-      )}
+      {/* Add entry modal */}
+      {showAdd && <AddSpokenModal onClose={() => setShowAdd(false)} />}
     </div>
   );
 }
@@ -353,43 +343,58 @@ function SpokenRow({
 
         {isEditing ? (
           <div className="mt-2 space-y-2">
-            {/* Spoken names */}
-            <div className="flex flex-wrap gap-1.5">
-              {Array.from({ length: 5 }, (_, i) => (
-                <input
-                  key={i}
-                  type="text"
-                  value={editing.spoken[i] ?? ''}
-                  onChange={(e) => onSpokenChange(i, e.target.value)}
-                  placeholder={i === 0 ? 'Primary spoken name' : `Alternate ${i}`}
-                  className={`rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 ${
-                    i === 0 ? 'w-48' : 'w-36'
-                  }`}
-                />
-              ))}
+            {/* Spoken names — with label */}
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                Spoken Names
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <input
+                    key={i}
+                    type="text"
+                    value={editing.spoken[i] ?? ''}
+                    onChange={(e) => onSpokenChange(i, e.target.value)}
+                    placeholder={i === 0 ? 'Primary' : `Alt ${i + 1}`}
+                    className={`rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 ${
+                      i === 0 ? 'w-44' : 'w-32'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Room + Category */}
-            <div className="flex gap-2">
-              <select
-                value={editing.room}
-                onChange={(e) => onRoomChange(e.target.value)}
-                className="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-              >
-                <option value="">No Room</option>
-                {rooms.map((r) => (
-                  <option key={r._id} value={r._id}>{r.name}</option>
-                ))}
-              </select>
-              <select
-                value={editing.userCat}
-                onChange={(e) => onCatChange(e.target.value)}
-                className="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-              >
-                {USER_CAT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+            {/* Room + Category — with labels */}
+            <div className="flex gap-3">
+              <div>
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                  Room
+                </label>
+                <select
+                  value={editing.room}
+                  onChange={(e) => onRoomChange(e.target.value)}
+                  className="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                >
+                  <option value="">No Room</option>
+                  {rooms.map((r) => (
+                    <option key={r._id} value={r._id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                  Google Home Type
+                </label>
+                <select
+                  value={editing.userCat}
+                  onChange={(e) => onCatChange(e.target.value)}
+                  className="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                >
+                  {USER_CAT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         ) : (
@@ -449,169 +454,6 @@ function SpokenRow({
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-// ─── Add Entry Form ───────────────────────────────────────────
-
-function AddSpokenForm({
-  rooms,
-  onClose,
-}: {
-  rooms: { _id: string; name: string }[];
-  onClose: () => void;
-}) {
-  const credentials = usePortalStore((s) => s.credentials);
-  const createSpoken = usePortalStore((s) => s.createSpoken);
-  const nodes = useDeviceStore((s) => s.nodes);
-
-  const [address, setAddress] = useState('');
-  const [spoken, setSpoken] = useState('');
-  const [room, setRoom] = useState('');
-  const [category, setCategory] = useState('std');
-  const [userCat, setUserCat] = useState('light');
-  const [saving, setSaving] = useState(false);
-
-  // Auto-fill spoken from device name when address is selected
-  const deviceNames = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const n of nodes) map.set(n.address, n.name);
-    return map;
-  }, [nodes]);
-
-  const handleAddressChange = (addr: string) => {
-    setAddress(addr);
-    if (!spoken && deviceNames.has(addr)) {
-      setSpoken(deviceNames.get(addr)!.toLowerCase());
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!credentials || !address || !spoken) return;
-
-    setSaving(true);
-    const payload: SpokenNodePayload = {
-      address,
-      spoken,
-      room: room || undefined,
-      category,
-      userCat,
-      uuid: credentials.uuid,
-      domain: credentials.domain,
-    };
-    await createSpoken(payload);
-    setSaving(false);
-    onClose();
-  };
-
-  return (
-    <div className="rounded-xl border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/5">
-      <div className="flex items-center justify-between border-b border-blue-200 px-4 py-2.5 dark:border-blue-800">
-        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Add Spoken Entry</h4>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-          <X size={14} />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3 p-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-              Device Address
-            </label>
-            <input
-              list="device-addresses"
-              type="text"
-              value={address}
-              onChange={(e) => handleAddressChange(e.target.value)}
-              placeholder="e.g., 36112 or ZW002_1"
-              className="w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-              required
-            />
-            <datalist id="device-addresses">
-              {nodes.map((n) => (
-                <option key={n.address} value={n.address}>{n.name}</option>
-              ))}
-            </datalist>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-              Spoken Name (primary)
-            </label>
-            <input
-              type="text"
-              value={spoken}
-              onChange={(e) => setSpoken(e.target.value)}
-              placeholder="e.g., backyard lights"
-              className="w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Room</label>
-            <select
-              value={room}
-              onChange={(e) => setRoom(e.target.value)}
-              className="w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-            >
-              <option value="">No Room</option>
-              {rooms.map((r) => (
-                <option key={r._id} value={r._id}>{r.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-              Google Home Type
-            </label>
-            <select
-              value={userCat}
-              onChange={(e) => setUserCat(e.target.value)}
-              className="w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-            >
-              {USER_CAT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-            >
-              {CATEGORY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving || !address || !spoken}
-            className="flex items-center gap-1 rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-            Add Entry
-          </button>
-        </div>
-      </form>
     </div>
   );
 }

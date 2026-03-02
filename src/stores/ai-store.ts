@@ -33,6 +33,8 @@ export interface ModelOption {
   label: string;
 }
 
+export type KeyStatus = 'unchecked' | 'checking' | 'valid' | 'invalid';
+
 interface AIState {
   provider: AIProvider;
   apiKey: string;
@@ -45,6 +47,8 @@ interface AIState {
   /** Dynamically fetched models per provider (overrides PROVIDER_MODELS when set) */
   fetchedModels: Partial<Record<AIProvider, ModelOption[]>>;
   fetchingModels: boolean;
+  /** Whether the current API key has been verified by a successful models fetch */
+  keyStatus: KeyStatus;
 
   setProvider: (provider: AIProvider) => void;
   setApiKey: (key: string) => void;
@@ -136,7 +140,8 @@ async function fetchClaudeModels(apiKey: string): Promise<ModelOption[]> {
 
 /** Fetch models from OpenAI API — filters to chat-capable models */
 async function fetchOpenAIModels(apiKey: string): Promise<ModelOption[]> {
-  const res = await fetch('https://api.openai.com/v1/models', {
+  // Use Vite dev proxy to bypass CORS (OpenAI blocks some browser requests)
+  const res = await fetch('/openai-api/v1/models', {
     headers: { 'Authorization': `Bearer ${apiKey}` },
   });
   if (!res.ok) throw new Error(`OpenAI ${res.status}`);
@@ -179,6 +184,7 @@ export const useAIStore = create<AIState>((set, get) => ({
   panelOpen: false,
   fetchedModels: {},
   fetchingModels: false,
+  keyStatus: 'unchecked',
 
   setProvider: (provider) => {
     const fetched = get().fetchedModels[provider];
@@ -188,7 +194,7 @@ export const useAIStore = create<AIState>((set, get) => ({
   },
 
   setApiKey: (apiKey) => {
-    set({ apiKey });
+    set({ apiKey, keyStatus: apiKey ? 'unchecked' : 'unchecked' });
     saveConfig({ ...get(), apiKey });
   },
 
@@ -225,7 +231,7 @@ export const useAIStore = create<AIState>((set, get) => ({
     const { provider, apiKey } = get();
     if (!apiKey || provider === 'custom') return;
 
-    set({ fetchingModels: true });
+    set({ fetchingModels: true, keyStatus: 'checking' });
     try {
       let models: ModelOption[];
       if (provider === 'claude') {
@@ -238,10 +244,13 @@ export const useAIStore = create<AIState>((set, get) => ({
       if (models.length > 0) {
         set((state) => ({
           fetchedModels: { ...state.fetchedModels, [provider]: models },
+          keyStatus: 'valid',
         }));
+      } else {
+        set({ keyStatus: 'valid' }); // Key works but no models returned
       }
     } catch {
-      // Silently fail — keep using defaults
+      set({ keyStatus: 'invalid' });
     } finally {
       set({ fetchingModels: false });
     }

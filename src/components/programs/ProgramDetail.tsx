@@ -23,6 +23,7 @@ import {
   enableProgram,
   disableProgram,
 } from '@/api/rest.ts';
+import { useLogStore } from '@/stores/log-store.ts';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog.tsx';
 import { useConfirm } from '@/hooks/useConfirm.ts';
 
@@ -71,10 +72,19 @@ export function ProgramDetail({ id, onEdit }: ProgramDetailProps) {
     );
   }
 
-  const exec = async (action: () => Promise<boolean>) => {
+  const exec = async (action: () => Promise<boolean>, actionLabel: string) => {
     setPending(true);
     try {
-      await action();
+      const ok = await action();
+      // Log program action to the event log
+      useLogStore.getState().addEntry({
+        category: 'program',
+        device: id,
+        deviceName: program.name,
+        action: actionLabel,
+        source: 'manual',
+        result: ok ? 'success' : 'fail',
+      });
       // Refresh program store after action
       setTimeout(() => useProgramStore.getState().fetchPrograms(), 500);
     } finally {
@@ -113,14 +123,14 @@ export function ProgramDetail({ id, onEdit }: ProgramDetailProps) {
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-2">
         <button
-          onClick={() => exec(() => runProgram(id))}
+          onClick={() => exec(() => runProgram(id), 'Run Then')}
           disabled={pending}
           className="flex items-center gap-1.5 rounded bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
         >
           <Play size={14} /> Run Then
         </button>
         <button
-          onClick={() => exec(() => runProgramElse(id))}
+          onClick={() => exec(() => runProgramElse(id), 'Run Else')}
           disabled={pending}
           className="flex items-center gap-1.5 rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
@@ -128,7 +138,7 @@ export function ProgramDetail({ id, onEdit }: ProgramDetailProps) {
         </button>
         {running && (
           <button
-            onClick={() => exec(() => stopProgram(id))}
+            onClick={() => exec(() => stopProgram(id), 'Stop')}
             disabled={pending}
             className="flex items-center gap-1.5 rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
           >
@@ -146,7 +156,7 @@ export function ProgramDetail({ id, onEdit }: ProgramDetailProps) {
               });
               if (!ok) return;
             }
-            exec(enabled ? () => disableProgram(id) : () => enableProgram(id));
+            exec(enabled ? () => disableProgram(id) : () => enableProgram(id), enabled ? 'Disable' : 'Enable');
           }}
           disabled={pending}
           className="flex items-center gap-1.5 rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"

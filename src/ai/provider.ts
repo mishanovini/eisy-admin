@@ -135,8 +135,24 @@ export async function sendChatMessage(userMessage: string): Promise<string> {
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    if (msg.includes('401') || msg.includes('authentication')) {
-      return 'API key is invalid. Please check your API key in Settings.';
+    // Provide specific, helpful error messages based on the actual failure
+    if (msg.includes('401')) {
+      return 'Authentication failed (HTTP 401). Please check your API key in Settings.';
+    }
+    if (msg.includes('403')) {
+      return 'Access denied (HTTP 403). Your API key may not have permission for this model or endpoint.';
+    }
+    if (msg.includes('429')) {
+      return 'Rate limit exceeded (HTTP 429). Please wait a moment and try again.';
+    }
+    if (msg.includes('400')) {
+      return `Bad request (HTTP 400). The selected model may not support this request format. Try a different model.`;
+    }
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
+      return `Network error: Could not reach the ${provider} API. This may be a CORS restriction with browser-based access.`;
+    }
+    if (msg.includes('404')) {
+      return `Model not found (HTTP 404). The model "${model}" may not be available. Try selecting a different model in Settings.`;
     }
     return `Error: ${msg}`;
   }
@@ -177,7 +193,13 @@ async function callClaude(
   });
 
   if (!response.ok) {
-    throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+    const errorBody = await response.text().catch(() => '');
+    let detail = '';
+    try {
+      const parsed = JSON.parse(errorBody);
+      detail = parsed?.error?.message || parsed?.message || '';
+    } catch { /* not JSON */ }
+    throw new Error(`Claude API error: ${response.status}${detail ? ` — ${detail}` : ''}`);
   }
 
   let data = await response.json();
@@ -248,7 +270,8 @@ async function callOpenAI(
   model: string,
   proxyUrl: string,
 ): Promise<string> {
-  const url = proxyUrl || 'https://api.openai.com/v1/chat/completions';
+  // Use the Vite dev proxy to bypass CORS (OpenAI blocks browser access to /v1/chat/completions)
+  const url = proxyUrl || '/openai-api/v1/chat/completions';
 
   const openaiMessages = [
     { role: 'system', content: system },
@@ -269,7 +292,15 @@ async function callOpenAI(
     }),
   });
 
-  if (!response.ok) throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '');
+    let detail = '';
+    try {
+      const parsed = JSON.parse(errorBody);
+      detail = parsed?.error?.message || parsed?.message || '';
+    } catch { /* not JSON */ }
+    throw new Error(`OpenAI API error: ${response.status}${detail ? ` — ${detail}` : ''}`);
+  }
 
   let data = await response.json();
   let textParts: string[] = [];

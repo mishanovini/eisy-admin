@@ -1,7 +1,7 @@
 /**
  * Settings page — AI configuration, connection info, and system management.
  */
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Bot,
   Wifi,
@@ -16,6 +16,10 @@ import {
   Linkedin,
   Code2,
   User,
+  ExternalLink,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from 'lucide-react';
 import { useAIStore, type AIProvider } from '@/stores/ai-store.ts';
 import { useConnectionStore } from '@/stores/connection-store.ts';
@@ -31,6 +35,144 @@ import { PortalActivityLog } from './PortalActivityLog.tsx';
 import { usePortalStore } from '@/stores/portal-store.ts';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog.tsx';
 import { useConfirm } from '@/hooks/useConfirm.ts';
+
+// ─── Provider configuration for API key links and status pages ───
+
+interface ProviderInfo {
+  label: string;
+  apiKeyUrl: string;
+  apiKeyLabel: string;
+  statusPageUrl: string;
+  /** Atlassian Statuspage API summary endpoint (Claude/OpenAI use Statuspage) */
+  statusApiUrl?: string;
+  /** Component name to look for in the Statuspage summary */
+  statusComponent?: string;
+  /** Google-specific: product ID for incidents filtering */
+  googleProductId?: string;
+}
+
+const PROVIDER_INFO: Record<string, ProviderInfo> = {
+  claude: {
+    label: 'Anthropic',
+    apiKeyUrl: 'https://console.anthropic.com/settings/keys',
+    apiKeyLabel: 'Anthropic Console → API Keys',
+    statusPageUrl: 'https://status.claude.com',
+    statusApiUrl: 'https://status.claude.com/api/v2/summary.json',
+    statusComponent: 'Claude API',
+  },
+  openai: {
+    label: 'OpenAI',
+    apiKeyUrl: 'https://platform.openai.com/api-keys',
+    apiKeyLabel: 'OpenAI Platform → API Keys',
+    statusPageUrl: 'https://status.openai.com',
+    statusApiUrl: 'https://status.openai.com/api/v2/summary.json',
+    statusComponent: 'Chat Completions',
+  },
+  gemini: {
+    label: 'Google',
+    apiKeyUrl: 'https://aistudio.google.com/apikey',
+    apiKeyLabel: 'Google AI Studio → API Keys',
+    statusPageUrl: 'https://status.cloud.google.com',
+  },
+};
+
+type StatusLevel = 'operational' | 'degraded' | 'partial_outage' | 'major_outage' | 'unknown' | 'loading';
+
+const STATUS_COLORS: Record<StatusLevel, string> = {
+  operational: 'bg-green-500',
+  degraded: 'bg-yellow-500',
+  partial_outage: 'bg-orange-500',
+  major_outage: 'bg-red-500',
+  unknown: 'bg-gray-400',
+  loading: 'bg-gray-300 animate-pulse',
+};
+
+const STATUS_LABELS: Record<StatusLevel, string> = {
+  operational: 'Operational',
+  degraded: 'Degraded Performance',
+  partial_outage: 'Partial Outage',
+  major_outage: 'Major Outage',
+  unknown: 'Status Unknown',
+  loading: 'Checking...',
+};
+
+/**
+ * Fetches the operational status of the currently selected AI provider.
+ * Uses Atlassian Statuspage API (Claude, OpenAI) which supports CORS.
+ * For Gemini, we'd need Google Cloud Status API which doesn't support CORS,
+ * so we show a link to the status page instead.
+ */
+function useProviderStatus(provider: string): { status: StatusLevel; description: string } {
+  const [status, setStatus] = useState<StatusLevel>('loading');
+  const [description, setDescription] = useState('');
+
+  const fetchStatus = useCallback(async () => {
+    const info = PROVIDER_INFO[provider];
+    if (!info?.statusApiUrl) {
+      setStatus('unknown');
+      setDescription('Check status page for details');
+      return;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const resp = await fetch(info.statusApiUrl, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (!resp.ok) {
+        setStatus('unknown');
+        setDescription(`Status API returned ${resp.status}`);
+        return;
+      }
+
+      const data = await resp.json();
+
+      // Atlassian Statuspage response: { components: [{ name, status }], status: { description } }
+      const components: { name: string; status: string }[] = data.components ?? [];
+      const match = components.find((c) =>
+        c.name === info.statusComponent || c.name.startsWith(info.statusComponent ?? ''),
+      );
+
+      if (match) {
+        // Map Atlassian status values to our levels
+        const map: Record<string, StatusLevel> = {
+          operational: 'operational',
+          degraded_performance: 'degraded',
+          partial_outage: 'partial_outage',
+          major_outage: 'major_outage',
+        };
+        setStatus(map[match.status] ?? 'unknown');
+        setDescription(`${match.name}: ${match.status.replace(/_/g, ' ')}`);
+      } else {
+        // Fallback to overall page status
+        const overall = data.status?.indicator;
+        if (overall === 'none') {
+          setStatus('operational');
+          setDescription(data.status?.description ?? 'All systems operational');
+        } else {
+          setStatus(overall === 'minor' ? 'degraded' : overall === 'major' ? 'major_outage' : 'unknown');
+          setDescription(data.status?.description ?? '');
+        }
+      }
+    } catch {
+      setStatus('unknown');
+      setDescription('Could not reach status API');
+    }
+  }, [provider]);
+
+  useEffect(() => {
+    setStatus('loading');
+    setDescription('');
+    fetchStatus();
+
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchStatus, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchStatus]);
+
+  return { status, description };
+}
 
 type Tab = 'ai' | 'voice' | 'notifications' | 'connection' | 'about';
 
@@ -82,6 +224,7 @@ function AISettingsTab() {
   const proxyUrl = useAIStore((s) => s.proxyUrl);
   const usage = useAIStore((s) => s.usage);
   const fetchingModels = useAIStore((s) => s.fetchingModels);
+  const keyStatus = useAIStore((s) => s.keyStatus);
   const setProvider = useAIStore((s) => s.setProvider);
   const setApiKey = useAIStore((s) => s.setApiKey);
   const setModel = useAIStore((s) => s.setModel);
@@ -91,13 +234,39 @@ function AISettingsTab() {
 
   const models = getModels();
   const canFetchModels = provider !== 'custom' && apiKey.length > 0;
+  const providerInfo = PROVIDER_INFO[provider];
+  const { status: providerStatus, description: statusDescription } = useProviderStatus(provider);
+
+  // Auto-validate API key when it changes (debounced)
+  useEffect(() => {
+    if (!apiKey || provider === 'custom') return;
+    const timer = setTimeout(() => {
+      fetchModels();
+    }, 800); // Wait 800ms after user stops typing
+    return () => clearTimeout(timer);
+  }, [apiKey, provider, fetchModels]);
 
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-          <Key size={16} className="text-blue-500" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">AI Provider</h3>
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <Key size={16} className="text-blue-500" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">AI Provider</h3>
+          </div>
+          {/* Provider status indicator */}
+          {provider !== 'custom' && (
+            <a
+              href={providerInfo?.statusPageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              title={statusDescription || STATUS_LABELS[providerStatus]}
+            >
+              <span className={`inline-block h-2 w-2 rounded-full ${STATUS_COLORS[providerStatus]}`} />
+              <span>{STATUS_LABELS[providerStatus]}</span>
+            </a>
+          )}
         </div>
         <div className="space-y-4 p-4">
           <div>
@@ -115,15 +284,59 @@ function AISettingsTab() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">API Key</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">API Key</label>
+              {providerInfo && (
+                <a
+                  href={providerInfo.apiKeyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600"
+                >
+                  <ExternalLink size={11} />
+                  {providerInfo.apiKeyLabel}
+                </a>
+              )}
+            </div>
             <input
               type="password"
+              name="ai-api-key"
+              autoComplete="ai-api-key"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={provider === 'claude' ? 'sk-ant-api03-...' : provider === 'gemini' ? 'AIza...' : 'sk-...'}
-              className="w-full max-w-sm rounded border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+              className={`w-full max-w-sm rounded border px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100 ${
+                keyStatus === 'valid'
+                  ? 'border-green-400 bg-green-50/50 dark:border-green-600 dark:bg-green-900/10'
+                  : keyStatus === 'invalid'
+                    ? 'border-red-400 bg-red-50/50 dark:border-red-600 dark:bg-red-900/10'
+                    : 'border-gray-300 bg-white dark:border-gray-600'
+              }`}
             />
-            <p className="mt-1 text-xs text-gray-400">Stored in localStorage. Do not use on shared computers.</p>
+            {/* Key validation status */}
+            <div className="mt-1 flex items-center gap-1.5">
+              {keyStatus === 'checking' && (
+                <span className="flex items-center gap-1 text-xs text-blue-500">
+                  <Loader2 size={12} className="animate-spin" /> Verifying key...
+                </span>
+              )}
+              {keyStatus === 'valid' && (
+                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                  <CheckCircle2 size={12} /> API key verified — {models.length} models available
+                </span>
+              )}
+              {keyStatus === 'invalid' && apiKey && (
+                <span className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+                  <XCircle size={12} /> Invalid API key — could not fetch models
+                </span>
+              )}
+              {keyStatus === 'unchecked' && apiKey && (
+                <span className="text-xs text-gray-400">Stored in localStorage. Do not use on shared computers.</span>
+              )}
+              {!apiKey && (
+                <span className="text-xs text-gray-400">Stored in localStorage. Do not use on shared computers.</span>
+              )}
+            </div>
           </div>
 
           <div>
@@ -210,14 +423,26 @@ function VoiceControlTab() {
   const portalStatus = usePortalStore((s) => s.status);
 
   return (
-    <div className="space-y-4">
-      <PortalConnection />
+    <div className="flex h-[calc(100vh-9rem)] flex-col gap-2">
+      {/* Portal connection — collapsible when connected (small banner) */}
+      <div className="shrink-0">
+        <PortalConnection />
+      </div>
 
       {portalStatus === 'connected' && (
         <>
+          {/* Spoken entries — takes remaining space, scrolls internally */}
           <PortalSpokenList />
-          <PortalRoomManager />
-          <PortalActivityLog />
+
+          {/* Rooms — compact, collapsed by default */}
+          <div className="shrink-0">
+            <PortalRoomManager />
+          </div>
+
+          {/* Activity log — small footer with internal scroll */}
+          <div className="shrink-0">
+            <PortalActivityLog />
+          </div>
         </>
       )}
     </div>

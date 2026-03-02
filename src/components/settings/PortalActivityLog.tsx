@@ -2,15 +2,17 @@
  * Portal activity log — shows recent portal API interactions.
  *
  * Filters the main log store to category='portal' and displays
- * a compact, scrollable history of all portal actions.
+ * a compact, collapsible, scrollable history of all portal actions.
+ * Collapsed by default to save screen space for spoken entries.
  */
-import { useEffect } from 'react';
-import { Clock, Check, X, Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Clock, Check, X, Activity, ChevronDown, ChevronRight } from 'lucide-react';
 import { useLogStore, type LogEntry } from '@/stores/log-store.ts';
 
 export function PortalActivityLog() {
   const entries = useLogStore((s) => s.entries);
   const loadEntries = useLogStore((s) => s.loadEntries);
+  const [expanded, setExpanded] = useState(false);
 
   // Load portal entries on mount
   useEffect(() => {
@@ -23,34 +25,44 @@ export function PortalActivityLog() {
   if (portalEntries.length === 0) {
     return (
       <div className="rounded-xl border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 px-4 py-3">
-          <Activity size={16} className="text-gray-400" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Portal Activity
-          </h3>
+        <div className="flex items-center gap-2 px-4 py-2.5">
+          <Activity size={14} className="text-gray-400" />
+          <span className="text-xs text-gray-400">
+            No portal activity yet
+          </span>
         </div>
-        <p className="px-4 pb-3 text-xs text-gray-400">
-          No portal interactions yet. Activity will appear here as you manage voice entries.
-        </p>
       </div>
     );
   }
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-        <Activity size={16} className="text-indigo-500" />
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Portal Activity
-        </h3>
-        <span className="text-xs text-gray-400">({portalEntries.length})</span>
-      </div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center justify-between px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+      >
+        <div className="flex items-center gap-2">
+          {expanded ? (
+            <ChevronDown size={14} className="text-gray-400" />
+          ) : (
+            <ChevronRight size={14} className="text-gray-400" />
+          )}
+          <Activity size={14} className="text-indigo-500" />
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Portal Activity
+          </span>
+          <span className="text-xs text-gray-400">({portalEntries.length})</span>
+        </div>
+        <span className="text-xs text-gray-400">{expanded ? 'Hide' : 'Show'}</span>
+      </button>
 
-      <div className="max-h-48 overflow-y-auto">
-        {portalEntries.slice(0, 30).map((entry, i) => (
-          <LogRow key={entry.id ?? i} entry={entry} />
-        ))}
-      </div>
+      {expanded && (
+        <div className="max-h-40 overflow-y-auto border-t border-gray-100 dark:border-gray-800">
+          {portalEntries.slice(0, 30).map((entry, i) => (
+            <LogRow key={entry.id ?? i} entry={entry} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
