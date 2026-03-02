@@ -1,0 +1,590 @@
+{
+  "version": 2,
+  "exportedAt": 1740600000000,
+  "products": [
+    {
+      "id": "insteon-switchlinc-dimmer",
+      "name": "Insteon SwitchLinc Dimmer (2477D)",
+      "manufacturer": "Insteon",
+      "modelNumber": "2477D",
+      "protocol": "insteon",
+      "description": "Dual-band dimmer wall switch for incandescent and dimmable CFL/LED loads. Supports on-level (OL), ramp rate (RR), and backlight (BL) configuration. Extended commands: Fast On (DFON), Fast Off (DFOF), Brighten (FDUP), Dim (FDDOWN), Fade Stop (FDSTOP), Beep, Query. Acts as both a dimmer and a mesh network repeater. Dual-band means it communicates via both 915MHz RF and powerline signaling simultaneously, providing redundant communication paths. Maximum load: 600W incandescent, 150W CFL/LED.",
+      "signalChain": ["Physical Paddle / Scene Command", "Insteon Dual-Band (RF 915MHz + Powerline)", "eisy Hub (Insteon PLM)"],
+      "matchPatterns": [
+        { "type": "insteon-nodedefid", "pattern": "DimmerLampSwitch_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "DimmerAuto_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "Dimmer_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "Dimmable_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "LampLincDimmer_ADV" }
+      ],
+      "isExternal": false,
+      "instanceCount": 15,
+      "instanceNames": ["Office by Garage", "Entry Way", "Kitchen Hanging Lights", "Theater", "Dining Chandelier", "Dining Area", "Downstairs Bathroom", "Office", "Master Bedroom", "Master Bathroom", "Guest Bedroom", "Laundry Room", "Living Room", "Stairs Bottom", "Stairs Top"],
+      "tags": ["dimmer", "lighting", "insteon", "mains-powered", "dual-band", "repeater"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-switchlinc-relay",
+      "name": "Insteon SwitchLinc On/Off (2477S)",
+      "manufacturer": "Insteon",
+      "modelNumber": "2477S",
+      "protocol": "insteon",
+      "description": "Dual-band on/off relay wall switch for non-dimmable loads. Simple DON/DOF commands only — no dimming capability. Used for loads that must not be dimmed: fluorescent tubes, motors, appliances. Same physical form factor as the 2477D dimmer. Also acts as an Insteon mesh repeater. Extended commands: Fast On, Fast Off, Query, Beep, Write. No ramp rate setting (transitions are instant).",
+      "signalChain": ["Physical Paddle / Scene Command", "Insteon Dual-Band (RF 915MHz + Powerline)", "eisy Hub (Insteon PLM)"],
+      "matchPatterns": [
+        { "type": "insteon-nodedefid", "pattern": "RelayLampSwitch_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "RelayLampOnly" },
+        { "type": "insteon-nodedefid", "pattern": "Relay_ADV" }
+      ],
+      "isExternal": false,
+      "instanceCount": 6,
+      "instanceNames": ["Kitchen Counter Lights", "Cabana Lights", "Backyard Sconce", "Garage Lights", "Counter Lights 2", "Simple Switch"],
+      "tags": ["switch", "relay", "lighting", "insteon", "mains-powered", "dual-band", "repeater"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-keypad-dimmer",
+      "name": "Insteon Keypad Dimmer 6-Button (2334-2)",
+      "manufacturer": "Insteon",
+      "modelNumber": "2334-2",
+      "protocol": "insteon",
+      "description": "6-button keypad with built-in dimmer on Button 1 (the main load). Buttons A-D are scene controllers only — they trigger scenes without directly controlling a load. Button 1 supports On Level, Ramp Rate, and Backlight configuration; buttons A-D support On Level only (for their scene responder role). Keypads are the primary physical interface for scene control in the house. Each button has an LED indicator. The main button (Button 1, address ending in '1') controls the physical load. Secondary buttons (A-D, addresses ending in 3-6) are ISY scene controllers.",
+      "signalChain": ["Physical Button Press", "Insteon Dual-Band (RF 915MHz + Powerline)", "eisy Hub → Scene/Program Trigger"],
+      "matchPatterns": [
+        { "type": "insteon-nodedefid", "pattern": "KeypadDimmer_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "KeypadButton_ADV" }
+      ],
+      "isExternal": false,
+      "instanceCount": 5,
+      "instanceNames": ["Front Yard Lights (Pad.1)", "Front Door Pad", "Kitchen Pad", "Master Bedroom Pad", "Stairs Top Pad"],
+      "tags": ["keypad", "dimmer", "scene-controller", "insteon", "mains-powered", "dual-band"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-motion-sensor-ii",
+      "name": "Insteon Motion Sensor II (2844-222)",
+      "manufacturer": "Insteon",
+      "modelNumber": "2844-222",
+      "protocol": "insteon",
+      "description": "Battery-powered PIR (Passive Infrared) motion sensor. Sends DON on motion detected, DOF when motion clears (configurable timeout). Each physical sensor has sub-nodes in ISY: main motion node (PIR2844_ADV), enable/disable node (PIR2844OnOff_ADV), and low battery alarm (BinaryAlarm_ADV). Uses CR123A lithium batteries with flat discharge curve — holds near 100% until rapid drop. RF-only communication (no powerline). Cannot be queried on demand — reports on motion events and periodic heartbeats only. LED blinks on motion detection (can be disabled).",
+      "signalChain": ["PIR Motion Detection", "Insteon RF (915MHz)", "eisy Hub (Insteon PLM)"],
+      "matchPatterns": [
+        { "type": "insteon-nodedefid", "pattern": "PIR2844_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "PIR2844OnOff_ADV" }
+      ],
+      "isExternal": false,
+      "instanceCount": 6,
+      "instanceNames": ["Front Yard Sensor Center", "Front Yard Sensor 1", "Front Yard Sensor 2", "New Entry Motion Sensor", "Side Sensor 1", "Side Sensor Replacement"],
+      "tags": ["motion-sensor", "sensor", "insteon", "battery-powered", "pir", "outdoor"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-open-close-sensor",
+      "name": "Insteon Open/Close Sensor (2843-222)",
+      "manufacturer": "Insteon",
+      "modelNumber": "2843-222",
+      "protocol": "insteon",
+      "description": "Battery-powered magnetic reed sensor for doors and gates. Reports DON (open) and DOF (closed) events. Each sensor has a heartbeat sub-node that reports periodically to confirm the sensor is alive and communicating. Uses CR2 lithium batteries. RF-only communication. Cannot be queried — reports state changes and periodic heartbeats only. Magnetic contact: one piece on door frame, one on door. Gap tolerance ~1 inch.",
+      "signalChain": ["Magnetic Reed Switch", "Insteon RF (915MHz)", "eisy Hub (Insteon PLM)"],
+      "matchPatterns": [
+        { "type": "insteon-nodedefid", "pattern": "OpenClose_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "BinaryAlarm_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "BinaryControl_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "DoorWindow_ADV" }
+      ],
+      "isExternal": false,
+      "instanceCount": 4,
+      "instanceNames": ["Front Door - Open", "Gate (Front) - Open", "Gate (Back) - Open", "Door to Garage - Open"],
+      "tags": ["door-sensor", "sensor", "insteon", "battery-powered", "magnetic-reed"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-remotelinc2",
+      "name": "Insteon RemoteLinc 2 (2440)",
+      "manufacturer": "Insteon",
+      "modelNumber": "2440",
+      "protocol": "insteon",
+      "description": "Battery-powered 4-button wireless remote. Each button is a separate ISY node (A/B/C/D). Used as a scene controller where each button press triggers a scene. Cannot be queried (battery-powered, sleeps between button presses). CRITICAL: Must press a button to wake the device before Writing Changes or updating configuration. Uses CR2032 coin cell batteries. Range: approximately 100 feet line-of-sight.",
+      "signalChain": ["Physical Button Press", "Insteon RF (915MHz)", "eisy Hub (Insteon PLM) → Scene Trigger"],
+      "matchPatterns": [
+        { "type": "insteon-nodedefid", "pattern": "RemoteLinc2_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "RemoteLinc2" }
+      ],
+      "isExternal": false,
+      "instanceCount": 6,
+      "instanceNames": ["Master Bedroom Remote (A/B/C/D)", "Closet Remote Switch", "Laundry Room Remote Switch", "Kitchen Counter Switch", "Backyard Switch", "Master Bedroom Erin Remote"],
+      "tags": ["remote", "scene-controller", "insteon", "battery-powered", "wireless"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-on-off-outlet",
+      "name": "Insteon On/Off Outlet (2663-222)",
+      "manufacturer": "Insteon",
+      "modelNumber": "2663-222",
+      "protocol": "insteon",
+      "description": "Dual-band on/off plug-in outlet module. Replaces a standard wall outlet with Insteon-controllable top and bottom outlets. The top outlet is Insteon-controlled; bottom is always-on. ISY reports this as RelayLampSwitch_ADV but the type field SubCat 57 identifies it as an outlet. Rated for 15A resistive loads. Also acts as an Insteon mesh repeater.",
+      "signalChain": ["Physical Toggle / Scene Command", "Insteon Dual-Band (RF 915MHz + Powerline)", "eisy Hub (Insteon PLM)"],
+      "matchPatterns": [
+        { "type": "insteon-nodedefid", "pattern": "OnOffOutlet_ADV" },
+        { "type": "insteon-nodedefid", "pattern": "ApplianceLinc_ADV" },
+        { "type": "insteon-type", "pattern": "2.57" }
+      ],
+      "isExternal": false,
+      "instanceCount": 1,
+      "instanceNames": ["Fridge"],
+      "tags": ["outlet", "insteon", "mains-powered", "dual-band", "repeater"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "yale-yrd256",
+      "name": "Yale YRD256 Assure Lock SL",
+      "manufacturer": "Yale",
+      "modelNumber": "YRD256",
+      "protocol": "zwave",
+      "description": "Z-Wave touchscreen deadbolt lock with keyless entry. Supports up to 250 user codes. Lock/unlock via SECMD secure Z-Wave commands. Each lock has sub-nodes for Access Control Alarm (event reporting) and Power Alarm (low battery alert). Battery-powered (4× AA alkaline), requires physical wake (turn deadbolt or enter code) for configuration writes. BATLVL property reports battery level 0-100%. Critical battery threshold: 20%. Both locks participate in Going Out, Goodnight, and Lock Doors scenes. Z-Wave security: S0 encryption for lock/unlock commands.",
+      "signalChain": ["Keypad/Thumbturn", "Yale YRD256 (Z-Wave 700)", "Z-Wave Mesh → Aeotec Repeaters", "eisy Hub (Z-Wave Controller)"],
+      "matchPatterns": [
+        { "type": "zwave-mfg", "pattern": "297.32780.3840" },
+        { "type": "address-prefix", "pattern": "ZY007" },
+        { "type": "address-prefix", "pattern": "ZY013" }
+      ],
+      "isExternal": false,
+      "instanceCount": 2,
+      "instanceNames": ["Garage Back Door Lock", "Side Gate Lock"],
+      "tags": ["lock", "security", "z-wave", "battery-powered", "touchscreen", "deadbolt"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "aeotec-range-extender-7",
+      "name": "Aeotec Range Extender 7",
+      "manufacturer": "Aeotec",
+      "modelNumber": "ZW189",
+      "protocol": "zwave",
+      "description": "Z-Wave 700-series mains-powered signal repeater. Plugs into a standard outlet and extends the Z-Wave mesh network range. Critical for reliable communication with battery-powered devices (locks, sensors) that are far from the eisy hub. Does not control any loads — purely a mesh relay. Always on, always listening. Positioned between the eisy and the Yale locks to ensure reliable lock communication in the yard/garage area.",
+      "signalChain": ["AC Outlet (Always On)", "Z-Wave 700 Mesh Relay", "eisy Hub (Z-Wave Controller)"],
+      "matchPatterns": [
+        { "type": "zwave-mfg", "pattern": "881.260.189" },
+        { "type": "address-prefix", "pattern": "ZY005" },
+        { "type": "address-prefix", "pattern": "ZY006" }
+      ],
+      "isExternal": false,
+      "instanceCount": 2,
+      "instanceNames": ["ZW 005 Repeater", "ZW 006 Repeater"],
+      "tags": ["repeater", "z-wave", "mains-powered", "mesh-extender", "700-series"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "aeotec-multisensor-6",
+      "name": "Aeotec MultiSensor 6",
+      "manufacturer": "Aeotec",
+      "modelNumber": "ZW100",
+      "protocol": "zwave",
+      "description": "Z-Wave 6-in-1 multi-sensor: motion, temperature, humidity, light level, UV index, and vibration/tamper. Can be battery-powered (2× CR123A) or USB-powered. Each physical sensor creates multiple ISY sub-nodes for different sensor capabilities: multilevel sensor, binary sensor, security alarm, motion sensor, tamper alarm. When USB-powered, also acts as a Z-Wave repeater. Currently disabled in ISY (enabled=false) — likely not in active use.",
+      "signalChain": ["Multi-Sensor Array", "Z-Wave 700 Mesh", "eisy Hub (Z-Wave Controller)"],
+      "matchPatterns": [
+        { "type": "address-prefix", "pattern": "ZY009" },
+        { "type": "address-prefix", "pattern": "ZY010" }
+      ],
+      "isExternal": false,
+      "instanceCount": 2,
+      "instanceNames": ["Entry 1 (ZY009)", "Entry 2 (ZY010)"],
+      "tags": ["multi-sensor", "motion-sensor", "temperature", "humidity", "z-wave", "battery-powered"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "logitech-harmony-hub",
+      "name": "Logitech Harmony Hub",
+      "manufacturer": "Logitech",
+      "modelNumber": "Harmony Hub",
+      "protocol": "ir",
+      "description": "WiFi-connected IR blaster hub that receives RF commands from the Harmony Remote and emits IR signals to control AV equipment. In this system, the Harmony Hub sends RC5 IR signals that are captured by the Flirc USB receiver connected to the eisy. This creates a bridge from the Harmony ecosystem into ISY programs. The Hub supports Activities (multi-device macros). Key IR commands used: Play, Pause, Menu, Chan Up/Down, Back — each mapped to an ISY program trigger via the eISY IR Controller node server. NOTE: Logitech has discontinued the Harmony line, but existing hubs continue to function.",
+      "signalChain": ["Harmony Remote (RF 2.4GHz)", "Harmony Hub (WiFi + IR Blaster)", "IR Signal (RC5 Protocol)", "Flirc USB Receiver", "eISY IR Controller Node Server", "ISY Button Node → Program Trigger"],
+      "matchPatterns": [
+        { "type": "nodeserver-prefix", "pattern": "n001_irbutton" },
+        { "type": "nodeserver-prefix", "pattern": "n001_controller" }
+      ],
+      "isExternal": true,
+      "instanceCount": 1,
+      "instanceNames": ["Harmony Hub (Theater Cabinet)"],
+      "tags": ["ir", "remote-control", "harmony", "av-control", "discontinued"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "flirc-usb-2",
+      "name": "Flirc USB 2.0",
+      "manufacturer": "Flirc",
+      "modelNumber": "Flirc Gen 2",
+      "protocol": "usb",
+      "description": "USB IR receiver that translates infrared signals into keyboard keypresses. Plugged into the eisy's USB port. Configured to receive RC5 IR protocol signals from the Harmony Hub's IR blaster. Each IR code is mapped to a specific keyboard key via the Flirc configuration software. The eISY IR Controller node server monitors these keyboard inputs and creates ISY button nodes for each mapped IR command. Toggle-bit fix applied 2026-02-24 to prevent double-triggers from RC5's toggle bit mechanism. Works reliably inside the theater cabinet.",
+      "signalChain": ["IR Signal (RC5) from Harmony Hub", "Flirc USB (IR → Keyboard HID)", "eisy USB Port", "eISY IR Controller Node Server"],
+      "matchPatterns": [],
+      "isExternal": true,
+      "instanceCount": 1,
+      "instanceNames": ["Flirc USB (eisy USB port)"],
+      "tags": ["usb", "ir-receiver", "flirc", "keyboard-emulation", "rc5"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "google-home-speakers",
+      "name": "Google Home / Nest Speakers",
+      "manufacturer": "Google",
+      "modelNumber": "Various (Home, Nest Mini, Nest Hub)",
+      "protocol": "cloud",
+      "description": "Google Home smart speakers and displays providing voice control for the smart home system. Connected to eisy through the Universal Devices ISY Portal (my.isy.io). Voice commands flow: User speaks → Google Assistant (cloud) → my.isy.io portal → eisy → device. Exposed devices are configured as 'spokens' in the ISY Portal — voice-friendly names mapped to devices, scenes, programs, or locks. Cloud-routed commands have 1-3 second latency. Requires active ISY Portal subscription and linked Google Home account via the 'Universal Devices' integration in the Google Home app.",
+      "signalChain": ["Voice Command", "Google Assistant (Cloud)", "my.isy.io Portal (Cloud)", "eisy Hub (REST API)", "Target Device"],
+      "matchPatterns": [],
+      "isExternal": true,
+      "instanceCount": 3,
+      "instanceNames": ["Living Room Speaker", "Kitchen Display", "Bedroom Mini"],
+      "tags": ["voice-control", "google-home", "cloud", "smart-speaker", "my-isy-io", "portal"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "hue-emulator-controller",
+      "name": "Hue Emulator Controller (Node Server)",
+      "manufacturer": "Universal Devices",
+      "modelNumber": "udi-poly-hue-emu",
+      "protocol": "other",
+      "description": "Polyglot node server running on eisy that emulates a Philips Hue bridge on the local network. WORKAROUND: Installed because the Logitech Harmony Hub has no native ISY/eisy integration. The Harmony Hub can discover and control Philips Hue bridges on the local network via UPnP/SSDP, so by emulating a Hue bridge, eisy devices appear as Hue lights and become directly controllable from Harmony activities — providing on/off and dimming control over the local network without requiring the IR chain (Flirc USB → eISY IR Controller). This gives the Harmony system two control paths: IR for button-triggered programs and Hue emulation for direct device on/off/dimming. Reads the 'spoken' property from each node's notes to determine which devices to expose. Supports on/off and dimming for exposed devices. NOTE: Google Home no longer supports local Hue bridge discovery — this emulator does NOT work with Google Home. Primary use case is now limited to Harmony Hub and similar devices that still do local Hue discovery. Device Hue IDs persist across restarts.",
+      "signalChain": ["Local Network Discovery (UPnP/SSDP)", "Hue Emulator (eisy Node Server)", "eisy Hub (REST API)", "Target Device"],
+      "matchPatterns": [],
+      "isExternal": false,
+      "instanceCount": 1,
+      "instanceNames": ["Hue Emulator Controller"],
+      "tags": ["node-server", "hue-emulation", "local-network", "polyglot", "harmony-compatible"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "eisy-hub",
+      "name": "Universal Devices eisy",
+      "manufacturer": "Universal Devices",
+      "modelNumber": "eisy",
+      "protocol": "platform",
+      "description": "Central home automation hub running IoX firmware v6.0.0. Manages all device protocols (Insteon, Z-Wave, IR, Zigbee, Matter) and provides the programming/automation engine. Built-in Insteon PLM (PowerLine Modem) and Z-Wave 700-series controller. APIs: REST (/rest/nodes, /rest/status, /rest/programs), SOAP (POST /services), WebSocket (wss://host:8443/rest/subscribe for real-time events), D2D protocol for program definitions. Located at 192.168.4.123, ports 80/8080/8443. Auth: Basic Auth. SSL: Self-signed certificate. Supports Programs (IF/THEN/ELSE automation), Scenes (device groups), Variables, Folders, and Node Servers (plugins).",
+      "signalChain": [],
+      "matchPatterns": [],
+      "isExternal": false,
+      "instanceCount": 1,
+      "instanceNames": ["eisy (192.168.4.123)"],
+      "tags": ["hub", "platform", "iox", "insteon-plm", "z-wave-controller", "automation"],
+      "source": "seed",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    }
+  ],
+  "topology": {
+    "id": "system-topology",
+    "hub": {
+      "name": "eisy",
+      "firmware": "IoX 6.0.0",
+      "ip": "192.168.4.123",
+      "protocols": ["Insteon", "Z-Wave", "IR", "Cloud"]
+    },
+    "protocolGroups": [
+      {
+        "protocol": "insteon",
+        "label": "Insteon Dual-Band Mesh",
+        "productIds": ["insteon-switchlinc-dimmer", "insteon-switchlinc-relay", "insteon-keypad-dimmer", "insteon-motion-sensor-ii", "insteon-open-close-sensor", "insteon-remotelinc2", "insteon-on-off-outlet"],
+        "notes": "915MHz RF + powerline signaling. Every mains-powered device is a mesh repeater. Self-healing network — if one path fails, signals route through alternate devices. Battery-powered sensors (motion, door, remote) are RF-only and do not repeat."
+      },
+      {
+        "protocol": "zwave",
+        "label": "Z-Wave 700-Series Mesh",
+        "productIds": ["yale-yrd256", "aeotec-range-extender-7", "aeotec-multisensor-6"],
+        "notes": "900MHz RF mesh network. Aeotec repeaters are critical for reliable lock communication — Yale locks are battery-powered and need nearby repeaters. Z-Wave uses S0/S2 encryption for security devices (locks). Range extenders positioned between eisy and outdoor locks."
+      },
+      {
+        "protocol": "ir",
+        "label": "IR Control Chain (Harmony → Flirc → eisy)",
+        "productIds": ["logitech-harmony-hub", "flirc-usb-2"],
+        "notes": "Harmony Remote → Harmony Hub (RF to IR) → Flirc USB (IR to keyboard) → eISY IR Node Server. RC5 protocol with toggle-bit fix. Used for theater lighting automation: Play/Pause/Menu trigger ISY programs that control scene lighting."
+      }
+    ],
+    "externalSystems": [
+      {
+        "name": "Google Home Voice Control",
+        "connectionPath": "Cloud via my.isy.io portal",
+        "productIds": ["google-home-speakers"],
+        "notes": "Voice → Google Assistant (cloud) → my.isy.io portal → eisy. Latency: 1-3s. Requires ISY Portal subscription and linked Google account. Exposed devices configured as 'spokens' in the portal."
+      },
+      {
+        "name": "Hue Emulator (Local Bridge)",
+        "connectionPath": "Local network UPnP/SSDP discovery",
+        "productIds": ["hue-emulator-controller"],
+        "notes": "Emulates Philips Hue bridge on LAN. Used by Harmony Hub for local device control. NOTE: Google Home no longer supports local Hue discovery — this is NOT a path for Google Home."
+      }
+    ],
+    "narrative": "This residential smart home is centered on a Universal Devices eisy hub (IoX 6.0, 192.168.4.123) managing approximately 80 devices across multiple protocols.\n\nINSTEON MESH (~60 devices): The largest protocol group. Dual-band (RF 915MHz + powerline) self-healing mesh network. Includes ~15 SwitchLinc Dimmers (2477D), ~6 On/Off Switches (2477S), 5 Keypad Dimmers (2334-2) for scene control, 6 Motion Sensors (2844-222) for outdoor/entry automation, 4 Door/Gate Sensors (2843-222), 6 RemoteLinc 2 remotes (2440), and 1 outlet. All mains-powered devices act as mesh repeaters.\n\nZ-WAVE 700 MESH (~6 devices): Yale YRD256 deadbolt locks (×2) on the garage back door and side gate, extended by 2 Aeotec Range Extender 7 repeaters for reliable outdoor communication. 2 Aeotec MultiSensor 6 units at entry points (currently disabled). Z-Wave S0 encryption for lock commands.\n\nIR CHAIN: Logitech Harmony Remote → Harmony Hub (RF→IR) → Flirc USB (IR→keyboard) → eISY IR Controller node server. Six IR button commands (Play, Pause, Menu, Chan Up/Down, Back) trigger theater lighting programs. RC5 toggle-bit fix applied.\n\nCLOUD: Google Home speakers connected via my.isy.io portal for voice control of lights, scenes, and locks.\n\nLOCAL BRIDGE: Hue Emulator Controller node server emulates a Philips Hue bridge on the LAN for Harmony Hub integration. Note: Google Home no longer supports local Hue discovery.",
+    "updatedAt": 1740600000000
+  },
+  "documents": [
+    {
+      "id": "doc-yale-lock-guide",
+      "productId": "yale-yrd256",
+      "title": "Yale YRD256 Z-Wave Lock Management",
+      "content": "# Yale YRD256 Assure Lock SL — Integration Guide\n\n## Z-Wave Inclusion\n1. Remove battery cover, press Network button (or enter master code + 7 + Network)\n2. On eisy: initiate Z-Wave inclusion via REST or Admin Console\n3. Lock will beep and LED confirms successful pairing\n\n## User Code Management\nCodes managed via Z-Wave UserSetCode/UserQuery/UserDelete SOAP commands.\nUp to 250 codes. Each code: 4-8 digits.\n\n## Battery Management\n- 4× AA alkaline batteries\n- BATLVL property: 0-100%\n- Critical threshold: 20% — replace immediately when below\n- Battery-powered: sleeps between operations, requires wake for config writes\n- Wake procedure: turn deadbolt or enter code, then send Write Changes within 10 seconds\n\n## Known Issues\n- Config writes fail silently if lock is asleep — always wake first\n- Access Control Alarm sub-node reports lock/unlock events and tamper alerts\n- Power Alarm sub-node reports low battery warnings\n- After battery replacement, lock may need re-query to update BATLVL",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-insteon-dimmer-guide",
+      "productId": "insteon-switchlinc-dimmer",
+      "title": "Insteon SwitchLinc Dimmer Configuration",
+      "content": "# Insteon SwitchLinc Dimmer (2477D) — Configuration Guide\n\n## On Level (OL)\nThe brightness level the device goes to when turned on. Range: 0% (off) to 100%.\nSet via ISY property OL (0-255 maps to 0-100%).\n\n## Ramp Rate (RR)\nHow fast the dimmer transitions between levels. 32 preset values from 0.1 seconds to 9 minutes.\nFaster rates = more responsive. Slower rates = smoother transitions for ambiance.\n\n## Backlight (BL)\nLED brightness on the switch paddle. 0 = off, 255 = maximum.\nUseful to dim at night or turn off completely in bedrooms.\n\n## Scene Behavior\nWhen used in a scene, each dimmer stores its scene-specific on-level and ramp rate.\nScene settings are written to the device's link table, not the ISY.\n\n## Troubleshooting\n- If dimmer flickers with LED bulbs: ensure bulbs are dimmable and rated for electronic dimmers\n- If dimmer doesn't respond: try query, then check ISY communication log\n- Dual-band advantage: if RF path fails, commands route via powerline (and vice versa)",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-insteon-motion-guide",
+      "productId": "insteon-motion-sensor-ii",
+      "title": "Insteon Motion Sensor Configuration",
+      "content": "# Insteon Motion Sensor II (2844-222) — Configuration Guide\n\n## Sub-nodes\nEach physical sensor creates 3 ISY nodes:\n- **Motion** (PIR2844_ADV): Reports DON (motion) and DOF (clear)\n- **Enable/Disable** (PIR2844OnOff_ADV): Toggle motion detection on/off\n- **Low Battery** (BinaryAlarm_ADV): Alerts when battery is low\n\n## Battery\nCR123A lithium. Flat discharge curve — reports near 100% until rapid end-of-life drop.\nReplace when low battery alarm triggers. Expected life: 2+ years.\n\n## Configuration Tips\n- Timeout: how long after last motion before DOF fires (default varies)\n- LED: blinks on detection (visible to confirm operation, disable for stealth)\n- Sensitivity: adjustable for pet immunity or extended range\n- Cannot be queried — only reports on events and periodic heartbeats\n\n## Common Programs\n- Front yard motion → turn on front yard lights (GV1 for tap, GV2 for hold)\n- Sunset-to-sunrise schedule gate for outdoor sensors\n- Multiple sensors OR'd together for coverage areas",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-harmony-ir-integration",
+      "productId": "logitech-harmony-hub",
+      "title": "Harmony → eisy IR Integration",
+      "content": "# Harmony Remote → eisy IR Integration\n\n## Signal Chain\nHarmony Remote (RF 2.4GHz) → Harmony Hub → IR Blaster (RC5 protocol) → Flirc USB → eISY IR Controller Node Server → ISY Button Nodes → Program Triggers\n\n## IR Button Mapping\n| Harmony Button | IR Code | ISY Node | GV1 (Press) | GV2 (Hold) |\n|---|---|---|---|---|\n| Play | RC5 Play | Play / Play 2 | Movie Play scene | Movie Play scene |\n| Pause | RC5 Pause | Pause / Pause 2 | Movie Pause scene | Movie Pause scene |\n| Menu | RC5 Menu | Menu / Menu 2 | Theater 100% | Theater 100% |\n| Chan Up | RC5 Ch+ | Chan Up / Chan Up 2 | Lights +1s | Lights +2s |\n| Chan Down | RC5 Ch- | Chan Down / Chan Down 2 | Lights -1s | Lights -2s |\n| Back | RC5 Back | Back / Back 2 | Theater off | Theater off |\n\n## GV1 vs GV2\nGV1 = button pressed (short tap). GV2 = button held (long press/repeat).\nClever use: Chan Up GV1 = small light adjustment, Chan Up GV2 = larger adjustment.\n\n## Toggle Bit Fix (2026-02-24)\nRC5 protocol includes a toggle bit that flips on each press. The Flirc firmware handles this, but the eISY IR node server was double-triggering. Fix applied to the Flirc key mapping configuration.\n\n## Key Scenes\n- Movie Play (53 members): dims theater to movie-watching levels\n- Movie Pause (9 members): partial light restore during pauses",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-flirc-setup",
+      "productId": "flirc-usb-2",
+      "title": "Flirc USB Configuration",
+      "content": "# Flirc USB 2.0 — Configuration Guide\n\n## Setup\n1. Download Flirc GUI software from flirc.tv\n2. Plug Flirc USB into computer for initial configuration\n3. Select controller type and map each IR signal to a keyboard key\n4. Save configuration (.fcfg file)\n5. Move Flirc USB to eisy's USB port\n\n## RC5 Toggle Bit\nThe RC5 infrared protocol includes a toggle bit that alternates (0/1) with each button press. This helps receivers distinguish between a held button (same toggle) and a new press (different toggle). Flirc handles this at the hardware level.\n\n## Key Mapping\nEach Harmony IR command is mapped to a specific keyboard key:\n- Play → specific key → eISY IR detects as Button press\n- Each key maps to one ISY IR Button node\n\n## Troubleshooting\n- Flirc not responding: unplug and replug USB, check eISY IR node server status\n- Double triggers: verify toggle bit handling in Flirc config\n- Configuration backup: .fcfg files stored locally",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-zwave-mesh",
+      "productId": "aeotec-range-extender-7",
+      "title": "Z-Wave Mesh Network Design",
+      "content": "# Z-Wave Mesh Network — Design Notes\n\n## Topology\neisy (Z-Wave controller) ← → Aeotec Repeaters ← → Yale Locks\n\n## Why Repeaters Are Critical\nYale locks are battery-powered and go to sleep between operations. They cannot relay signals for other devices. The Aeotec Range Extender 7 units are always-on, always-listening, and relay messages between the eisy and the locks.\n\n## Placement\n- ZW 005 Repeater: positioned between eisy and garage area\n- ZW 006 Repeater: positioned between eisy and side gate\n- This ensures both locks have at least one strong relay path\n\n## Troubleshooting\n- If a lock becomes unresponsive: check nearest repeater first\n- Network repair: /rest/zwave/node/repair to rebuild routing tables\n- Signal strength: check rpnode (routing parent) in device metadata\n- Repeaters should show rpnode = themselves (direct to controller)",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-google-home",
+      "productId": "google-home-speakers",
+      "title": "Google Home Integration via ISY Portal",
+      "content": "# Google Home — ISY Portal Cloud Integration\n\n## How It Works\nVoice → Google Assistant (cloud) → my.isy.io portal → eisy REST API → device\nLatency: 1-3 seconds. Requires internet connection and ISY Portal subscription.\n\n## Setup\n1. Log in to my.isy.io and select your eisy device\n2. Go to Connectivity > Amazon Echo/Google Home\n3. Add 'spokens' — voice-friendly names mapped to devices, scenes, programs, or locks\n4. Click 'Send spokens to Google Home' to sync\n5. In Google Home app, add 'Universal Devices' integration and link your ISY Portal account\n\n## Spokens Configuration\nEach 'spoken' maps a voice name to an ISY entity:\n- Devices: lights, switches, outlets\n- Scenes: 'On' activates scene, 'Off' deactivates\n- Programs: 'On' runs THEN clause, 'Off' runs ELSE clause\n- Locks: lock command only (unlock disabled for security)\n- Thermostats, State Variables\n\nTip: Set a Scene's category to 'Light' (not 'Scene') to make it visible in the Google Home app.\n\n## Voice Command Examples\n- \"Hey Google, turn on the theater lights\"\n- \"Hey Google, set the dining area to 50%\"\n- \"Hey Google, activate Goodnight scene\"\n- \"Hey Google, lock the back door\"",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-hue-emulator",
+      "productId": "hue-emulator-controller",
+      "title": "Hue Emulator Controller Guide",
+      "content": "# Hue Emulator Controller — Local Network Bridge\n\n## Why This Exists (Workaround)\nThe Logitech Harmony Hub has no native ISY/eisy integration. However, the Harmony Hub CAN discover and control Philips Hue bridges on the local network via UPnP/SSDP. By running a Hue bridge emulator on eisy, devices appear as Hue lights and become directly controllable from Harmony activities.\n\nThis gives the Harmony system TWO control paths into eisy:\n1. **IR chain** (Harmony Remote → Hub → IR Blaster → Flirc USB → eISY IR Controller) — for button-triggered program execution (Play, Pause, Menu, etc.)\n2. **Hue emulation** (Harmony Hub → Hue Emulator → eisy REST API) — for direct on/off and dimming of individual devices (lights, switches)\n\nThe IR chain is limited to a small number of discrete button commands, while Hue emulation provides smooth dimming and direct device control without consuming IR button slots.\n\n## What It Does\nEmulates a Philips Hue bridge on the local network using UPnP/SSDP discovery. Devices that support local Hue bridge discovery (e.g., Logitech Harmony Hub) can control eisy devices through this emulator.\n\n## How Devices Are Exposed\nThe Hue Emulator reads the 'spoken' property from each node's notes in ISY. Any node with a spoken property set gets exposed as an emulated Hue light.\n- Set spoken to a custom name: device appears with that name\n- Set spoken to '1': device appears with its existing ISY name\n- Device Hue IDs persist across restarts\n\n## Setting the Spoken Property\nNode notes are accessible via: GET /rest/nodes/{address}/notes\nThe notes XML contains a <spoken> field in <NodeProperties>.\n\n## Limitations\n- On/off and dimming only (no color, temperature, or advanced Hue features)\n- Google Home NO LONGER supports local Hue bridge discovery — this does NOT work with Google Home\n- Alexa support is also discontinued\n- Primary remaining use case: Logitech Harmony Hub and similar local-discovery devices\n\n## Node Server Details\n- Package: udi-poly-hue-emu (Polyglot v3)\n- Uses PyISY library to connect to eisy\n- Uses Python Hue Hub Emulator library",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-eisy-platform",
+      "productId": "eisy-hub",
+      "title": "eisy Platform Reference",
+      "content": "# eisy (IoX 6.0) — Platform Reference\n\n## Network\n- IP: 192.168.4.123\n- Ports: 80 (eisy-ui), 8080 (HTTP), 8443 (HTTPS)\n- Auth: Basic Auth (admin/admin)\n- SSL: Self-signed certificate\n\n## APIs\n- REST: /rest/nodes, /rest/status, /rest/programs, /rest/vars\n- SOAP: POST /services (GetAllD2D, RenameNode, DeviceSpecific, etc.)\n- WebSocket: wss://host:8443/rest/subscribe (protocol: ISYSUB)\n- D2D: Program upload via POST /program/upload/{HEX_ID}?key={KEY}\n\n## Critical Notes\n- File uploads: POST /file/upload/WEB/console/{path}?load=n\n- MUST use .htm extension, NOT .html (eisy MIME type bug)\n- D2D program save requires broadcast step to activate\n- WebSocket auth: credential encoding in Sec-WebSocket-Protocol header\n\n## Protocols Supported\n- Insteon (built-in PLM)\n- Z-Wave 700-series (built-in controller)\n- Node Servers: eISY IR Controller, Hue Emulator, others\n- Zigbee (via add-on)\n- Matter (via firmware update)",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    }
+  ],
+  "references": [
+    {
+      "id": "ref-yale-manual",
+      "productId": "yale-yrd256",
+      "title": "Yale YRD256 Installation & Programming Guide",
+      "url": "https://www.yalehome.com/us/en/support/yale-assure-lock-sl-with-z-wave",
+      "refType": "manual",
+      "notes": "Key pages: p23 master code reset. p31 Z-Wave inclusion. p40 user code programming.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-yale-zwave-params",
+      "productId": "yale-yrd256",
+      "title": "Yale YRD256 Z-Wave Configuration Parameters",
+      "url": "https://products.z-wavealliance.org/products/2300",
+      "refType": "tech-doc",
+      "notes": "Z-Wave Alliance product page with all configuration parameters, command classes, and association groups.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-aeotec-re7-manual",
+      "productId": "aeotec-range-extender-7",
+      "title": "Aeotec Range Extender 7 Product Page",
+      "url": "https://aeotec.com/z-wave-repeater/",
+      "refType": "manual",
+      "notes": "Specifications, LED indicator meanings, Z-Wave inclusion instructions.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-aeotec-ms6-manual",
+      "productId": "aeotec-multisensor-6",
+      "title": "Aeotec MultiSensor 6 Engineering Spec",
+      "url": "https://aeotec.com/z-wave-sensor/",
+      "refType": "tech-doc",
+      "notes": "Full Z-Wave parameter list, sensor calibration, power modes (battery vs USB), configuration guide.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-flirc-setup-guide",
+      "productId": "flirc-usb-2",
+      "title": "Flirc USB Quick Start Guide",
+      "url": "https://flirc.tv/start",
+      "refType": "manual",
+      "notes": "Initial setup, firmware updates, IR learning procedure, troubleshooting.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-flirc-forums",
+      "productId": "flirc-usb-2",
+      "title": "Flirc Community Forums",
+      "url": "https://forum.flirc.tv/",
+      "refType": "forum",
+      "notes": "Community support for Flirc configuration issues, IR protocol compatibility, firmware bugs.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-harmony-support",
+      "productId": "logitech-harmony-hub",
+      "title": "Logitech Harmony Support (Legacy)",
+      "url": "https://support.logi.com/hc/en-us/categories/360001828034-Harmony",
+      "refType": "wiki",
+      "notes": "Legacy support pages for discontinued Harmony line. Activity setup, device database, troubleshooting.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-insteon-wiki",
+      "productId": "insteon-switchlinc-dimmer",
+      "title": "Insteon Wiki — Protocol Details",
+      "url": "https://wiki.universal-devices.com/index.php?title=ISY-994i_Series_INSTEON",
+      "refType": "wiki",
+      "notes": "Universal Devices wiki covering Insteon protocol details, linking, scene management, troubleshooting.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-isy-rest-api",
+      "productId": "eisy-hub",
+      "title": "ISY REST API Documentation",
+      "url": "https://wiki.universal-devices.com/index.php?title=ISY_Developers:API:REST_Interface",
+      "refType": "tech-doc",
+      "notes": "Official REST API reference for ISY/eisy. Endpoint documentation, response formats, authentication.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-isy-forum",
+      "productId": "eisy-hub",
+      "title": "Universal Devices Forum",
+      "url": "https://forum.universal-devices.com/",
+      "refType": "forum",
+      "notes": "Active community forum for ISY/eisy. Troubleshooting, program examples, node server development.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-zwave-alliance-yale",
+      "productId": "yale-yrd256",
+      "title": "Z-Wave Alliance — Yale Products",
+      "url": "https://products.z-wavealliance.org/manufacturers/29/products",
+      "refType": "tech-doc",
+      "notes": "Official Z-Wave certification data for Yale locks. Command classes, supported features.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-google-home-isy",
+      "productId": "google-home-speakers",
+      "title": "Google Home + ISY Portal Setup",
+      "url": "https://wiki.universal-devices.com/index.php?title=ISY_Portal_Google_Home",
+      "refType": "wiki",
+      "notes": "Setup guide for connecting Google Home to ISY via the my.isy.io portal. Device exposure, voice command syntax.",
+      "createdAt": 1740600000000
+    }
+  ],
+  "troubleshooting": [
+    {
+      "id": "ts-lock-pending-writes",
+      "productId": "yale-yrd256",
+      "issue": "Yale lock shows 'pending writes' but changes don't apply. Write Changes command appears to succeed but lock doesn't update.",
+      "resolution": "Yale locks are battery-powered and sleep between operations. To write config: 1) Turn the deadbolt or enter a code to wake the lock, 2) Within 10 seconds, send Write Changes from ISY, 3) Lock LED confirms the write. If still failing, check Z-Wave repeater connectivity.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-lock-battery-reporting",
+      "productId": "yale-yrd256",
+      "issue": "Yale lock battery level shows 0% or doesn't update after battery replacement.",
+      "resolution": "After replacing batteries, perform a manual query: /rest/query/{address}. The lock must be awake (turn deadbolt) when the query is sent. Battery level (BATLVL) should update within seconds. If it shows 0%, try removing and reinserting batteries, then query again.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-ir-double-trigger",
+      "productId": "logitech-harmony-hub",
+      "issue": "Harmony remote button press triggers ISY program twice. Play button fires Movie Play scene, then immediately fires again.",
+      "resolution": "RC5 toggle bit issue. The RC5 protocol flips a toggle bit on each press, but the Flirc/eISY combination was treating each toggle state as a separate command. Fix: Updated Flirc key mapping to ignore toggle bit (applied 2026-02-24). Alternatively, add a 1-second debounce in the ISY program's IF condition.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-motion-false-triggers",
+      "productId": "insteon-motion-sensor-ii",
+      "issue": "Front yard motion sensors triggering on wind-blown plants, causing lights to turn on repeatedly at night.",
+      "resolution": "Adjusted motion sensor sensitivity and timeout via ISY configuration. For outdoor sensors: reduce sensitivity to avoid triggering on small movements, increase timeout between triggers (prevents rapid on-off-on cycles). Also added schedule condition to programs: only trigger during sunset-to-sunrise window.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-dimmer-led-flicker",
+      "productId": "insteon-switchlinc-dimmer",
+      "issue": "Insteon dimmer causes LED bulbs to flicker at low brightness levels (below 20%).",
+      "resolution": "LED bulbs need a minimum load to operate cleanly with Insteon dimmers. Solutions: 1) Set minimum on-level to 20% via OL property, 2) Use LED-compatible bulbs rated for electronic dimmers, 3) Add a bypass capacitor (Insteon #2477d-bypass) if flickering persists. Also ensure ramp rate isn't too fast — very fast ramps can cause visible flicker with some LED drivers.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-zwave-lock-unreachable",
+      "productId": "aeotec-range-extender-7",
+      "issue": "Yale lock intermittently becomes unreachable. Commands fail with 'device not responding' error.",
+      "resolution": "Z-Wave mesh routing issue. The lock was trying to route through a distant device instead of the nearest repeater. Fix: 1) Verify Aeotec repeaters are powered and showing online, 2) Run Z-Wave network repair (/rest/zwave/node/repair) to rebuild routing tables, 3) Check rpnode (routing parent) in device metadata — it should point to the nearest repeater. If repeater is unplugged or moved, locks lose their relay path.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-remote-no-response",
+      "productId": "insteon-remotelinc2",
+      "issue": "RemoteLinc 2 button presses not triggering scenes. Device appears in ISY but commands don't work.",
+      "resolution": "RemoteLinc 2 is battery-powered and sleeps aggressively. If the device was recently re-linked or ISY was restored from backup, the link tables may be stale. Fix: 1) Press any button to wake the remote, 2) Send Write Changes immediately (within 10 seconds), 3) Test button press. If still failing, remove and re-add the device to relevant scenes.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-door-sensor-heartbeat",
+      "productId": "insteon-open-close-sensor",
+      "issue": "Door sensor shows 'unknown' status and hasn't reported in over 24 hours. Appears offline.",
+      "resolution": "Door sensors are battery-powered and communicate via periodic heartbeats. If heartbeats stop: 1) Check battery level (may need replacement), 2) Open and close the door to force a state report, 3) Check if sensor is within Insteon RF range (no powerline for battery devices). If sensor is at the edge of range, consider adding a mains-powered Insteon device nearby as a repeater.",
+      "resolvedAt": 1740600000000
+    }
+  ]
+}

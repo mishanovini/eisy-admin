@@ -1,0 +1,391 @@
+{
+  "version": 1,
+  "exportedAt": 1740600000000,
+  "integrations": [
+    {
+      "id": "insteon-dimmers",
+      "name": "Insteon Dimmers",
+      "protocol": "Insteon (dual-band RF + powerline)",
+      "description": "Insteon dimmer switches for variable-brightness lighting control. Devices include Office by Garage, Entry Way, Kitchen Hanging Lights, Theater, Dining Chandelier, all bedrooms, and bathrooms. All dimmers support On Level (OL), Ramp Rate (RR), and Backlight (BL) configuration. Extended commands: Fast On, Fast Off, Brighten, Dim, Fade Stop, Beep, Query. Dual-band communication uses both 915MHz RF and powerline signaling for reliability. Each device acts as a repeater, creating a self-healing mesh network.",
+      "deviceTypes": ["DimmerLampSwitch_ADV"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-switches",
+      "name": "Insteon Switches & Relays",
+      "protocol": "Insteon (dual-band RF + powerline)",
+      "description": "Insteon on/off relay switches with no dimming capability. Used for loads that should not be dimmed: Kitchen Counter Lights, Cabana Lights, Backyard Sconce, Fridge, Garage Lights. Simple on/off control via DON/DOF commands. Dual-band communication uses both 915MHz RF and powerline signaling. Each device acts as a repeater in the Insteon mesh network.",
+      "deviceTypes": ["RelayLampSwitch_ADV", "RelayLampOnly"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-keypads",
+      "name": "Insteon Keypads",
+      "protocol": "Insteon (dual-band RF + powerline)",
+      "description": "Insteon 6-button keypad dimmers used as scene controllers. Button 1 controls the physical load (dimmer). Buttons A-D are scene-only controllers that trigger scenes without directly controlling a load. Keypads include: Front Yard Lights, Front Door Pad, Kitchen Pad, Master Bedroom Pad, Stairs Top Pad. Each button press activates a different scene (e.g., Goodnight, Going Out). Keypads are the primary physical interface for scene control in the house.",
+      "deviceTypes": ["KeypadDimmer_ADV", "KeypadButton_ADV"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-motion",
+      "name": "Insteon Motion Sensors",
+      "protocol": "Insteon (RF)",
+      "description": "Battery-powered Insteon PIR motion sensors for motion-triggered automation. Devices include: Front Yard Sensor Center, Front Yard Sensor 1, Front Yard Sensor 2 (exterior), New Entry Motion Sensor (interior entry), Side Sensor 1, Side Sensor Replacement (side yard). Each sensor has sub-nodes: Motion Enabled (PIR2844OnOff_ADV) for enabling/disabling detection, and Low Battery (BinaryAlarm_ADV) for battery monitoring. Sensors communicate on motion events (DON/DOF) and periodic heartbeats.",
+      "deviceTypes": ["PIR2844_ADV", "PIR2844OnOff_ADV"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-door-sensors",
+      "name": "Insteon Door & Entry Sensors",
+      "protocol": "Insteon (RF)",
+      "description": "Battery-powered Insteon open/close sensors for doors and gates. Sensors include: Front Door - Open, Gate (Front) - Open, Gate (Back) - Open, Door to Garage - Open. Each sensor has a heartbeat sub-node that reports periodically to confirm the sensor is alive and communicating. Garage-Closed (BinaryControl_ADV) monitors the garage door state. Report DON (open) and DOF (closed) events.",
+      "deviceTypes": ["BinaryAlarm_ADV", "BinaryControl_ADV"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "insteon-remotes",
+      "name": "Insteon Remotes",
+      "protocol": "Insteon (RF)",
+      "description": "Battery-powered Insteon RemoteLinc2 4-button remotes. Each button is a separate ISY node. Devices include: Master Bedroom Remote (A/B/C/D buttons), Closet Remote Switch, Laundry Room Remote Switch, Kitchen Counter Switch, Backyard Switch, Master Bedroom Erin Remote. Used as scene controllers where each button press triggers a scene. Cannot be queried (battery-powered, sleep between button presses). Wake requirement: press a button to wake before Writing Changes.",
+      "deviceTypes": ["RemoteLinc2_ADV", "RemoteLinc2"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "zwave-locks",
+      "name": "Z-Wave Locks",
+      "protocol": "Z-Wave (700-series mesh)",
+      "description": "Yale Z-Wave deadbolt locks for entry points. Two locks in the system: Garage Back Door Lock (ZY007) and Side Gate Lock (ZY013). Each lock has sub-nodes for Access Control Alarm and Power Alarm. Battery-powered (4x AA), requires physical wake (turn deadbolt) for configuration writes. Lock/unlock via SECMD secure commands. BATLVL property reports battery level 0-100%. Critical threshold: 20%. Both locks participate in Going Out, Goodnight, and Lock Doors scenes.",
+      "deviceTypes": ["ZY007", "ZY013"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "zwave-sensors-repeaters",
+      "name": "Z-Wave Sensors & Repeaters",
+      "protocol": "Z-Wave (700-series mesh)",
+      "description": "Z-Wave mains-powered repeaters and multi-sensors that extend the Z-Wave mesh network. Repeaters: ZW 005 Repeater (ZY005), ZW 006 Repeater (ZY006) provide range extension to battery-powered locks and sensors. Multi-Sensors: Entry 1 (ZY009) and Entry 2 (ZY010) provide multilevel sensing, binary sensing, security alarms, motion detection, and tamper alarms. Each physical device has multiple sub-nodes for different sensor capabilities. Repeaters are critical for reliable lock communication in the yard/garage area.",
+      "deviceTypes": ["ZY005", "ZY006", "ZY009", "ZY010"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "ir-harmony",
+      "name": "IR Control (Harmony Remote)",
+      "protocol": "Harmony RF -> Hub -> IR (RC5) -> Flirc USB -> eISY",
+      "description": "Infrared control integration using Logitech Harmony remote and eisy's IR node server. Signal chain: Harmony Remote (RF 2.4GHz) sends to Harmony Hub, which emits IR (RC5 protocol) captured by Flirc USB receiver, processed by the eISY IR Controller node server, triggering ISY programs/scenes. IR Button nodes: Play, Pause, Menu, Chan Up, Chan Down, Back (each with a duplicate '2' variant for different Harmony activities). Key scenes: Movie Play (53 members, theater lighting), Movie Pause (9 members, partial restore).",
+      "deviceTypes": ["irbutton", "controller"],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "google-home",
+      "name": "Google Home & Voice Control",
+      "protocol": "ISY Portal (my.isy.io) -> Google Home",
+      "description": "Voice control and smart home integration via Google Home, connected through the Universal Devices ISY Portal service (my.isy.io). Commands flow: Voice -> Google -> my.isy.io -> eisy -> device. Exposed devices include all lighting dimmers/switches, scenes (Goodnight, Going Out, Movie Play), and locks. The Hue Emulator Controller provides a secondary local-network path that makes eisy devices appear as Philips Hue bulbs for lower-latency LAN control. Cloud-routed commands have 1-3 second latency.",
+      "deviceTypes": [],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "eisy-platform",
+      "name": "eisy / IoX Platform",
+      "protocol": "IoX 6.0 (REST, SOAP, WebSocket, D2D)",
+      "description": "The Universal Devices eisy central hub running IoX firmware v6.0.0. Manages all device protocols (Insteon, Z-Wave, IR, Zigbee, Matter) and provides the programming/automation engine. APIs: REST (/rest/nodes, /rest/status, /rest/programs), SOAP (POST /services for advanced operations), WebSocket (wss://host:8443/rest/subscribe for real-time events), D2D (program definitions in XML). Device: 192.168.4.123 ports 80/8080/8443. Auth: Basic Auth. SSL: Self-signed certificate. Key capabilities: Programs, Scenes, Variables, Schedule, Folders.",
+      "deviceTypes": [],
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    }
+  ],
+  "mappings": [
+    {
+      "id": "ir-play-movie",
+      "integrationId": "ir-harmony",
+      "sourceDevice": "Harmony Remote",
+      "targetDevice": "IR Button - Play",
+      "sourceAction": "Press Play (Activity: Watch TV)",
+      "targetAction": "DON -> triggers Movie Play scene (53 members: dims all non-theater lights)",
+      "notes": "RC5 IR code via Flirc USB. There are Play and Play 2 variants for different Harmony activities.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ir-pause-movie",
+      "integrationId": "ir-harmony",
+      "sourceDevice": "Harmony Remote",
+      "targetDevice": "IR Button - Pause",
+      "sourceAction": "Press Pause (Activity: Watch TV)",
+      "targetAction": "DON -> triggers Movie Pause scene (9 members: raises some lights for visibility)",
+      "notes": "Complementary to Play -- restores partial lighting during movie pause.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ir-menu",
+      "integrationId": "ir-harmony",
+      "sourceDevice": "Harmony Remote",
+      "targetDevice": "IR Button - Menu",
+      "sourceAction": "Press Menu button",
+      "targetAction": "DON -> ISY program trigger",
+      "notes": "Menu and Menu 2 may map to different Harmony activities.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ir-chanup",
+      "integrationId": "ir-harmony",
+      "sourceDevice": "Harmony Remote",
+      "targetDevice": "IR Button - Chan Up",
+      "sourceAction": "Press Channel Up",
+      "targetAction": "DON -> ISY program trigger (brighten scene or custom action)",
+      "notes": "Chan Up/Down buttons repurposed for scene brightness control via ISY programs.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "keypad-goodnight",
+      "integrationId": "insteon-keypads",
+      "sourceDevice": "Front Door Pad.C (Keypad Button C)",
+      "targetDevice": "Goodnight scene",
+      "sourceAction": "Press button C on Front Door Keypad",
+      "targetAction": "Activates Goodnight scene (51 members): turns off all lights, locks doors",
+      "notes": "Keypad buttons are Insteon controllers that directly trigger scenes. Each button (A-D) controls a different scene.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "motion-frontyard",
+      "integrationId": "insteon-motion",
+      "sourceDevice": "Front Yard Sensor Center (PIR2844_ADV)",
+      "targetDevice": "Front Yard Lights scene",
+      "sourceAction": "Motion detected (DON event)",
+      "targetAction": "ISY program triggers Front Yard Lights scene to 100%, with 5-min timeout",
+      "notes": "Three front yard sensors (Center, 1, 2) cover the front yard. Any motion triggers the program. Uses sunset-to-sunrise schedule condition.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "lock-goingout",
+      "integrationId": "zwave-locks",
+      "sourceDevice": "Going Out scene activation",
+      "targetDevice": "Garage Back Door Lock + Side Gate Lock",
+      "sourceAction": "Going Out scene activated (via keypad or voice)",
+      "targetAction": "Both locks receive LOCK command, all lights go off",
+      "notes": "Going Out scene (54 members) handles house-wide shutdown including locking. Lock Doors scene (2 members) is the subset for just locks.",
+      "createdAt": 1740600000000
+    }
+  ],
+  "documents": [
+    {
+      "id": "doc-insteon-dimmer-guide",
+      "integrationId": "insteon-dimmers",
+      "title": "Insteon Dimmer Behavior & Configuration",
+      "content": "# Insteon Dimmer Configuration Guide\n\n## On Level (OL)\nThe On Level sets the brightness a dimmer goes to when turned on via a scene or a simple DON command without a level parameter. Stored as 0-255 (mapped to 0-100%).\n\n- Set via REST: `GET /rest/nodes/{addr}/set/OL/{value}`\n- Read from: `/rest/status/{addr}` -> property with `@_id='OL'`\n- Default: 255 (100%)\n- Tip: Setting OL to a lower value (e.g., 191 = 75%) is useful for bedside lamps that shouldn't blast at full brightness when turned on.\n\n## Ramp Rate (RR)\nControls how fast the light fades on/off. Values are index-based (not linear seconds).\n\nCommon values:\n- 28 = 0.5 seconds (ISY default)\n- 27 = 2.0 seconds (smooth, most common for living areas)\n- 26 = 4.5 seconds\n- 15 = 47 seconds (dramatic slow fade for theater)\n- 31 = 0.1 seconds (nearly instant)\n\nSet via REST: `GET /rest/nodes/{addr}/set/RR/{index}`\n\n## Backlight (BL)\nControls the LED backlight brightness on the physical switch/dimmer paddle. Value 0-255.\n- 0 = Off (useful in bedrooms to avoid light pollution at night)\n- 128 = ~50%\n- 255 = Full brightness\n\n## Extended Commands\n- **Fast On (DFON)**: Instant to On Level, bypasses ramp rate\n- **Fast Off (DFOF)**: Instant off, bypasses ramp rate\n- **Brighten (FDUP)**: Increase brightness one step (~3%)\n- **Dim (FDDOWN)**: Decrease brightness one step\n- **Fade Stop (FDSTOP)**: Stop a ramp in progress\n- **Beep (BEEP)**: Makes the device beep (useful for identification)\n- **Query**: Force device to report current status\n- **Write Changes**: Write pending configuration to device EEPROM\n\n## Keypad Buttons\nKeypad dimmers (KeypadDimmer_ADV) have a main load (button 1) plus 4 secondary buttons (A-D). Button 1 controls the physical load. Buttons A-D are scene controllers only -- they don't directly control any load but can trigger scenes.\n\n## Known Quirks\n- fast-xml-parser converts numeric addresses to JavaScript numbers. Always use `String()` when comparing or displaying addresses.\n- Scene property SOAP (DeviceSpecific with G_SP) returns 501 on IoX 6.0. Read OL/RR from device status instead.\n- After changing OL/RR via REST, the new value takes effect immediately but won't survive a device power cycle until Write Changes is called.",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-scene-architecture",
+      "integrationId": "insteon-keypads",
+      "title": "Scene Architecture & Roles",
+      "content": "# Scene Architecture\n\n## Controller vs Responder Roles\nEvery scene member has a role:\n- **Controller** (link type 16): Triggers the scene when activated. Multiple controllers can trigger the same scene.\n- **Responder** (link type 32): Responds to the scene activation by going to its configured On Level and Ramp Rate.\n\n## How Scenes Work\n1. A controller is activated (keypad button press, program, REST command)\n2. The eisy sends commands to all responder members\n3. Each responder goes to its configured OL at its configured RR\n4. Scene activation is atomic -- all responders change together\n\n## Scene Configuration\nEach responder has independent settings per scene:\n- **On Level**: The brightness this device goes to when scene is activated (0-100%)\n- **Ramp Rate**: How fast this device transitions (instant to 9 minutes)\n\nThese are stored as device-level properties (OL and RR) in the eisy status store.\n\n## Key Scenes in This System\n\n### Living Spaces\n- **Downstairs** (16 members): All downstairs lighting\n- **Upstairs** (20 members): All upstairs lighting\n- **Kitchen Lights** (3 members): Kitchen-specific\n- **Bathroom Lights** (3 members): All bathrooms\n- **Hallway** (3 members): Hallway lights\n\n### Activity-Based\n- **Goodnight** (51 members): Bedtime -- everything off, doors locked\n- **Going Out** (54 members): Leaving house\n- **Movie Play** (53 members): Theater mode\n- **Good Morning**: Wake-up routine\n- **Sexy Time** (55 members): Mood lighting\n\n### Security\n- **Lock Doors** (2 members): Lock all locks\n- **Lock All Locks** (2 members): Same\n\n### Specific Areas\n- **Front Yard Lights** (3 members): Exterior front\n- **Backyard Lights** (4 members): Exterior back\n- **Master Bedroom Ceiling Fan** (4 members)\n- **Garage Light** (4 members)\n- **Theater Lights** (3 members)",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-insteon-motion-guide",
+      "integrationId": "insteon-motion",
+      "title": "Insteon Motion Sensor Behavior & Configuration",
+      "content": "# Insteon Motion Sensors (PIR2844_ADV)\n\nInsteon motion sensors report events via DON (motion detected) and DOF (motion cleared). They are battery-powered and sleep between events.\n\n## Sub-nodes per sensor\n- **Main node (.1)**: Motion events (DON/DOF)\n- **Motion Enabled (.13)** (PIR2844OnOff_ADV): On/Off state for enabling/disabling motion detection\n- **Low Battery (.3)** (BinaryAlarm_ADV): Battery low alarm\n\n## Installed Sensors\n- Front Yard Sensor Center, Front Yard Sensor 1, Front Yard Sensor 2 (exterior, motion-triggered lighting)\n- New Entry Motion Sensor, New Entry Motion Sensor 1 (interior entry)\n- Side Sensor 1, Side Sensor Replacement (side yard)\n\n## Battery Life\nTypically 2+ years with alkaline batteries. The Low Battery sub-node triggers when voltage drops below threshold. Battery level is reported as BATLVL property (0-100%).\n\n## ISY Programming Tips\n- Use multiple sensors in OR conditions for coverage: \"IF Front Yard Sensor Center DON OR Front Yard Sensor 1 DON OR Front Yard Sensor 2 DON\"\n- Add schedule conditions for time-based behavior: \"AND From Sunset To Sunrise\"\n- Use Wait + Then actions for timeout: \"THEN set lights 100%, WAIT 5 minutes, THEN set lights 0%\"",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-insteon-door-sensors-guide",
+      "integrationId": "insteon-door-sensors",
+      "title": "Insteon Door & Gate Sensor Behavior",
+      "content": "# Insteon Door & Gate Sensors (BinaryAlarm_ADV)\n\nOpen/close sensors for doors and gates. Report DON (open) and DOF (closed).\n\n## Installed Sensors\n- Front Door - Open (with heartbeat sub-node)\n- Gate (Front) - Open (with heartbeat sub-node)\n- Gate (Back) - Open (with heartbeat sub-node)\n- Door to Garage - Open (with heartbeat sub-node)\n- Garage-Closed (BinaryControl_ADV) -- garage door state sensor\n\n## Heartbeat Sub-nodes\nEach door/gate sensor has a heartbeat sub-node that reports periodically to confirm the sensor is alive and communicating. If heartbeats stop, the sensor may have lost power or moved out of RF range.\n\n## Battery\nBattery-powered with long life. Monitor via heartbeat sub-node activity -- missed heartbeats indicate potential battery depletion.\n\n## ISY Programming Tips\n- Use door sensors as conditions in security programs: \"IF Front Door - Open is On THEN send notification\"\n- Combine with schedule for time-aware alerts: \"IF Gate (Front) - Open is On AND time is after 10pm\"\n- Gate sensors useful for triggering outdoor lighting when someone enters the yard",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-insteon-remotes-guide",
+      "integrationId": "insteon-remotes",
+      "title": "Insteon RemoteLinc2 Remote Behavior",
+      "content": "# Insteon RemoteLinc2 Remotes\n\nBattery-powered 4-button remotes. Each button is a separate ISY node.\n\n## Installed Remotes\n- Master Bedroom Remote: A, B, C, D (4 nodes for 4 buttons)\n- Closet Remote Switch\n- Laundry Room Remote Switch\n- Kitchen Counter Switch\n- Backyard Switch\n- Master Bedroom Erin Remote\n\n## Usage\nUsed as scene controllers -- each button press triggers a scene. Buttons are Insteon controllers that directly activate linked scenes.\n\n## Battery & Communication\n- Cannot be queried (battery-powered, sleep between button presses)\n- Wake requirement: Press a button to wake before Writing Changes\n- Battery-powered, communicate only on button press events\n\n## Grouping\nSub-nodes share a base address. In the UI, they should be grouped by physical device:\n- Master Bedroom Remote: \"56 28 53 1\" through \"56 28 53 4\" (buttons A-D)\n- Use `getPhysicalDeviceAddress()` to resolve base address for grouping",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-zwave-locks-guide",
+      "integrationId": "zwave-locks",
+      "title": "Z-Wave Lock Management",
+      "content": "# Z-Wave Lock Management\n\n## Yale Deadbolt Locks\nTwo Z-Wave locks in the system:\n1. **Garage Back Door Lock** (ZY007_1) -- Yale deadbolt\n2. **Side Gate Lock** (ZY013_1) -- Yale deadbolt\n\n### Control Commands\n- Lock: `GET /rest/nodes/{addr}/cmd/SECMD/1` (Secure Command: Lock)\n- Unlock: `GET /rest/nodes/{addr}/cmd/SECMD/0` (Secure Command: Unlock)\n- Query: `GET /rest/query/{addr}` -- force status refresh\n\n### Status\n- ST property: 0 = Unlocked, 100 = Locked\n- Displayed as: Locked/Unlocked (via labels.ts smart labeling)\n\n### Sub-nodes per Lock\nEach Z-Wave lock creates multiple sub-nodes:\n- **Main node** (ZY007_1 / ZY013_1): Lock/unlock control + status\n- **Access Control Alarm** (ZY007_306): Reports lock events (manual lock, keypad lock, RF lock, etc.)\n- **Power Alarm** (ZY007_309 / ZY009_309): Battery and power status alerts\n\n### Battery Management\n- Locks are battery-powered (4x AA typically)\n- BATLVL property reports 0-100%\n- Critical threshold: 20% -- below this, lock may fail to operate\n- Warning threshold: 40% -- order replacement batteries\n- Battery life: ~12 months with normal use\n\n### Configuration Writes\nLocks are battery-powered and sleep between operations. To write configuration changes:\n1. Send WriteDeviceUpdates SOAP command\n2. Within 30 seconds, physically operate the lock (turn deadbolt) to wake it\n3. The eisy will then write pending changes during the wake window\n\n### Mesh Network\nZ-Wave repeaters (ZW 005, ZW 006) are critical for lock reliability. Locks have limited TX power and rely on the mesh to reach the eisy. Place repeaters between the eisy and distant locks.\n\n### Scenes\n- **Lock Doors** scene (2 members): Locks both locks\n- **Lock All Locks** scene (2 members): Same purpose, possibly different trigger\n- Both locks are responders in Going Out and Goodnight scenes",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-ir-harmony-guide",
+      "integrationId": "ir-harmony",
+      "title": "Harmony Remote IR Integration",
+      "content": "# Harmony Remote -> eisy IR Integration\n\n## Signal Chain\n```\nHarmony Remote (RF 2.4GHz)\n  -> Harmony Hub (WiFi + IR blaster)\n    -> IR signal (RC5 protocol)\n      -> Flirc USB receiver\n        -> eISY IR Controller (node server)\n          -> IR Button nodes (ISY)\n            -> ISY Programs/Scenes\n```\n\n## How It Works\nThe Logitech Harmony Hub sends IR commands as part of its Activities. The Flirc USB adapter, connected to the eisy, captures these IR signals and translates them into ISY node events. Each IR command is mapped to an IR Button node in the eisy.\n\n## IR Button Nodes\nEach captured IR command has a corresponding ISY node:\n- Play / Play 2, Pause / Pause 2\n- Menu / Menu 2\n- Chan Up / Chan Up 2, Chan Down / Chan Down 2\n- Back / Back 2\n\nThe duplicate nodes (numbered vs. \"2\" suffix) exist for different Harmony activities that send different IR codes for the same conceptual action.\n\n## Key Scenes\n- **Movie Play** (53 members): Activated by Play IR button. Sets theater lighting -- dims everything except theater area, sets theater to appropriate level.\n- **Movie Pause** (9 members): Activated by Pause IR button. Raises lights partially for visibility during pause.\n\n## RC5 Protocol Notes\n- RC5 uses a toggle bit that alternates with each button press\n- Flirc handles toggle bit normalization, but some edge cases can cause missed commands\n- If commands are intermittently missed, re-learn the Flirc mapping for that button\n\n## Troubleshooting\n- **IR not detected**: Ensure Flirc USB has line-of-sight to Harmony Hub IR blaster\n- **Duplicate commands**: RC5 repeat handling -- Flirc should filter repeats\n- **Wrong activity**: Check which Harmony Activity is sending the IR -- different activities may send different codes",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-google-home-guide",
+      "integrationId": "google-home",
+      "title": "Google Home Voice Control Setup",
+      "content": "# Google Home Integration via my.isy.io\n\n## Architecture\nGoogle Home integration uses the Universal Devices ISY Portal service (my.isy.io) as a bridge:\n\n1. eisy registers with my.isy.io portal using ISY credentials\n2. Selected devices and scenes are exposed to Google Home via the portal\n3. Google Home discovers devices through the my.isy.io cloud service\n4. Voice commands: Google -> my.isy.io -> eisy -> device\n\n## Setup\n1. Create account at my.isy.io\n2. Link eisy to portal (Settings -> Portal)\n3. In Google Home app, add \"ISY\" or \"Universal Devices\" integration\n4. Authorize with my.isy.io credentials\n5. Devices appear in Google Home\n\n## Voice Command Examples\n- \"Hey Google, turn on the kitchen lights\"\n- \"Hey Google, dim the theater to 50%\"\n- \"Hey Google, lock the front door\"\n- \"Hey Google, activate goodnight\" (triggers Goodnight scene)\n- \"Hey Google, set dining chandelier to 75%\"\n\n## Hue Emulator (Local Alternative)\nThe Hue Emulator Controller provides a local-network alternative that doesn't require cloud connectivity:\n- Makes eisy devices appear as Philips Hue bulbs on the LAN\n- Google Home can discover them as Hue devices\n- Advantage: No cloud dependency, lower latency\n- Disadvantage: Limited to basic on/off/dim commands\n\n## Known Issues\n- Latency: 1-3 seconds for cloud-routed commands\n- Device naming: Use clear, distinct names to avoid Google misinterpreting commands\n- Scene names should be unique and pronounceable\n- If portal connection drops, voice control stops until reconnected",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-eisy-api-guide",
+      "integrationId": "eisy-platform",
+      "title": "eisy REST/SOAP/WebSocket API Reference",
+      "content": "# eisy API Quick Reference\n\n## REST API (GET requests, XML responses)\n\n### Device Operations\n- List all nodes: `GET /rest/nodes`\n- Scene details with members: `GET /rest/nodes/scenes`\n- Device status (all): `GET /rest/status`\n- Device status (single): `GET /rest/status/{addr}`\n- Send command: `GET /rest/nodes/{addr}/cmd/{cmd}/{value}`\n- Set property: `GET /rest/nodes/{addr}/set/{propId}/{value}`\n- Query device: `GET /rest/query/{addr}`\n\n### Common Commands (cmd parameter)\n- DON: Turn on (with optional level 0-255)\n- DOF: Turn off\n- DFON: Fast on (instant, no ramp)\n- DFOF: Fast off (instant, no ramp)\n- FDUP: Brighten one step\n- FDDOWN: Dim one step\n- FDSTOP: Stop fade in progress\n- BEEP: Make device beep\n- QUERY: Query current status\n- SECMD/1: Lock (Z-Wave)\n- SECMD/0: Unlock (Z-Wave)\n\n### Properties (propId for set)\n- OL: On Level (0-255)\n- RR: Ramp Rate (index 0-31)\n- BL: Backlight (0-255)\n\n### Programs\n- List programs: `GET /rest/programs?subfolders=true`\n- Run program: `GET /rest/programs/{hexId}/run`\n- Stop program: `GET /rest/programs/{hexId}/stop`\n- Enable: `GET /rest/programs/{hexId}/enable`\n- Disable: `GET /rest/programs/{hexId}/disable`\n\n### System\n- Config: `GET /rest/config`\n- Variables: `GET /rest/vars/get/{1|2}` (integer/state)\n- Error log: `GET /rest/log/error`\n\n## SOAP API (POST /services)\nHeaders: Content-Type: text/xml, SOAPACTION: \"urn:...\"\n\n### Key Operations\n- GetAllD2D: Fetch all program definitions + session key\n- RenameNode: Rename device or scene\n- WriteDeviceUpdates: Write pending config changes to device EEPROM\n- SetDeviceLinkMode: Enter Insteon/Z-Wave linking mode\n- DiscoverNodes: Start device discovery\n\nSOAPACTION URNs:\n- Most operations: `urn:udi-com:service:X_Insteon_Lighting_Service:1#ActionName`\n- D2DCommand: `urn:udi-com:service:X_IoX_Service:1#D2DCommand`\n\n## WebSocket (wss://{host}:8443/rest/subscribe)\n- Protocol header: ISYSUB\n- Auth: Basic Auth in HTTP upgrade headers\n- After connect, send: `<subscribe><authorization>Basic {base64}</authorization></subscribe>`\n- Events: XML messages with control, action, node, eventInfo fields\n- Event types: status (DON/DOF/ST), program (_3), system (_0, _1), error\n\n## Critical Notes\n- All responses are XML (use fast-xml-parser)\n- Addresses: Insteon = \"XX YY ZZ N\" (spaces), Z-Wave = \"ZW007_1\" or \"ZY013_1\"\n- fast-xml-parser coerces numeric strings to numbers -- always String() addresses\n- Self-signed TLS cert -- accept browser warning or use rejectUnauthorized:false in code",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    },
+    {
+      "id": "doc-eisy-programs-guide",
+      "integrationId": "eisy-platform",
+      "title": "ISY Program Authoring (D2D Format)",
+      "content": "# ISY Program Authoring Guide\n\n## Program Structure\nEvery ISY program has:\n- **IF**: Conditions (evaluated continuously or on trigger)\n- **THEN**: Actions when IF is true\n- **ELSE**: Actions when IF is false\n\n## Condition Types\n- Device status: \"IF Front Door - Open is On\" (sensor open)\n- Schedule: \"IF From Sunset To Sunrise\" (time-based)\n- Variable: \"IF $darkOutside is 1\" (state variable)\n- Program: \"IF Program 'X' is True\" (chain programs)\n- Combinations: AND/OR nesting with unlimited depth\n\n## Action Types\n- Set device: \"Set Theater To 75%\" (DON with level)\n- Turn off: \"Set Kitchen Lights Off\" (DOF)\n- Activate scene: \"Set Scene 'Goodnight' On\" (DON on scene address)\n- Wait: \"Wait 5 minutes\" (delay between actions)\n- Run program: \"Run Program 'Lock Check'\" (chain programs)\n- Set variable: \"Set $darkOutside To 1\"\n- Send notification: \"Send notification 'Motion detected'\"\n\n## D2D XML Format\nPrograms are stored in D2D (Device-to-Device) XML format:\n```xml\n<trigger>\n  <name>Front Yard Motion</name>\n  <if><and>\n    <cond><node>55 AA 46 1</node><status>DON</status></cond>\n    <schedule><from><sunset>0</sunset></from><to><sunrise>0</sunrise></to></schedule>\n  </and></if>\n  <then>\n    <set><node>Front Yard Lights</node><status>DON</status><value>255</value></set>\n    <wait>300</wait>\n    <set><node>Front Yard Lights</node><status>DOF</status></set>\n  </then>\n</trigger>\n```\n\n## Key Scenes in This System\n- **Goodnight** (51 members): Master shutdown -- all lights off, doors locked\n- **Going Out** (54 members): Leave-house mode -- similar to Goodnight\n- **Movie Play** (53 members): Theater mode -- dim everything, theater lights set\n- **Movie Pause** (9 members): Partial restore during movie pause\n- **Whole House** (52 members): Everything on/off\n- **Good Morning** (1 member): Morning routine\n- **Sexy Time** (55 members): Mood lighting configuration\n\n## Programming Tips\n- Use scenes instead of individual device commands for atomicity\n- Keypad buttons (A-D) are great as manual scene triggers\n- Combine motion sensors with schedule for outdoor lighting\n- Use Wait actions with care -- they block the program thread\n- For complex logic, chain multiple small programs instead of one large one",
+      "createdAt": 1740600000000,
+      "updatedAt": 1740600000000
+    }
+  ],
+  "references": [
+    {
+      "id": "ref-insteon-protocol",
+      "integrationId": "insteon-dimmers",
+      "title": "Insteon Protocol Reference",
+      "url": "https://www.insteon.com/support",
+      "notes": "Insteon dual-band protocol documentation. Key: command codes (DON=0x11, DOF=0x13, Fast On=0x12, Fast Off=0x14), device categories, linking procedures.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-pir2844-manual",
+      "integrationId": "insteon-motion",
+      "title": "Insteon Motion Sensor (2844) Manual",
+      "url": "https://www.insteon.com/support",
+      "notes": "PIR motion sensor. Battery: CR123A. Detection range: 30ft. LED blinks on detection. Jumper settings for sensitivity and timeout duration.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-yale-lock-manual",
+      "integrationId": "zwave-locks",
+      "title": "Yale YRD256 Installation & Programming Guide",
+      "url": "https://www.yalehome.com/support",
+      "notes": "Yale Z-Wave deadbolt. Key pages: master code reset, Z-Wave inclusion/exclusion procedure, battery replacement (4x AA), low battery behavior. Lock reports BATLVL via Z-Wave.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-flirc-setup",
+      "integrationId": "ir-harmony",
+      "title": "Flirc USB Setup Guide",
+      "url": "https://flirc.tv/start",
+      "notes": "Flirc USB IR receiver setup. Used with Harmony Hub for IR-to-USB translation. RC5 protocol. Key: re-learn buttons if toggle bit causes issues.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-harmony-activities",
+      "integrationId": "ir-harmony",
+      "title": "Logitech Harmony Activity Setup",
+      "url": "https://support.myharmony.com",
+      "notes": "Harmony Hub activity configuration. Each activity can send different IR codes -- this is why duplicate IR button nodes exist (Play vs Play 2). Note: Logitech has discontinued Harmony, but existing devices continue to work.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-google-home-isy",
+      "integrationId": "google-home",
+      "title": "ISY Portal / Google Home Integration",
+      "url": "https://my.isy.io",
+      "notes": "Universal Devices portal service. Links eisy to Google Home, Alexa, IFTTT. Requires account creation and eisy registration. Device/scene exposure is configured through the portal.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-isy-rest-api",
+      "integrationId": "eisy-platform",
+      "title": "ISY REST API Documentation (Wiki)",
+      "url": "https://wiki.universal-devices.com/index.php?title=ISY_Developers:API:REST_Interface",
+      "notes": "Official REST API docs. Key endpoints: /rest/nodes, /rest/status, /rest/nodes/{addr}/cmd/{cmd}. Note: some endpoints documented for ISY994 may not work on eisy/IoX 6.0.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-isy-soap-api",
+      "integrationId": "eisy-platform",
+      "title": "ISY SOAP API Documentation (Wiki)",
+      "url": "https://wiki.universal-devices.com/index.php?title=ISY_Developers:API:SOAP",
+      "notes": "SOAP operations: GetAllD2D, RenameNode, WriteDeviceUpdates, etc. Note: DeviceSpecific with G_SP returns 501 on IoX 6.0.",
+      "createdAt": 1740600000000
+    },
+    {
+      "id": "ref-isy-websocket",
+      "integrationId": "eisy-platform",
+      "title": "ISY WebSocket Subscription API",
+      "url": "https://wiki.universal-devices.com/index.php?title=ISY_Developers:API:WebSocket",
+      "notes": "WebSocket subscription at /rest/subscribe. Protocol: ISYSUB. Requires Basic Auth on HTTP upgrade. Events are XML with control, action, node fields.",
+      "createdAt": 1740600000000
+    }
+  ],
+  "troubleshooting": [
+    {
+      "id": "ts-scene-dropdown-revert",
+      "integrationId": "insteon-dimmers",
+      "issue": "Scene editor On Level and Ramp Rate dropdowns flash the new value then immediately revert to the previous value",
+      "resolution": "Root cause was dual: 1) The SOAP setSceneOnLevel/setSceneRampRate calls returned 501 (failed), so the optimistic update was never confirmed. 2) The component was reading from a SOAP-fetched state that kept defaulting to 100%/0.5s. Fix: Removed all SOAP-based scene property code. Switched to reading OL/RR from the device status store (useStatusStore.getProperty) and writing via REST setNodeProperty. Added optimistic status store updates after successful REST calls.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-zwave-misclass",
+      "integrationId": "zwave-locks",
+      "issue": "Z-Wave multi-sensor sub-nodes like 'Entry 1 Multilevel Sensor' were being classified as locks due to includes('entry') matching in device type detection",
+      "resolution": "Removed includes('entry') from the lock detection logic in device-types.ts. Z-Wave locks are correctly detected via includes('lock') or the ZY prefix pattern. Added specific detection for sensor sub-nodes by their nodeDefId patterns (ZY009_104, ZY009_155, etc.). Also added 'repeater' device category for ZW005/ZW006 devices (mains-powered, no battery).",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-lock-battery",
+      "integrationId": "zwave-locks",
+      "issue": "Z-Wave lock showed pending configuration changes that couldn't be written because the lock was sleeping",
+      "resolution": "Z-Wave battery-powered devices (locks, sensors) sleep between operations to conserve battery. To write configuration: 1) Send WriteDeviceUpdates SOAP command, 2) Within 30 seconds, physically operate the device to wake it (turn the deadbolt for locks, trigger motion for sensors), 3) The eisy writes pending changes during the wake window. For the UI: show a notification explaining the wake requirement instead of just showing a loading spinner.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-rc5-toggle",
+      "integrationId": "ir-harmony",
+      "issue": "Harmony Remote IR commands intermittently missed by Flirc USB -- approximately 1 in 10 button presses not detected",
+      "resolution": "RC5 protocol uses a toggle bit that alternates with each button press. If the Flirc's learned pattern doesn't account for the toggle bit, it may miss every other press. Fix: Re-learn the button mapping in the Flirc configuration software, pressing the remote button multiple times during learn mode to capture both toggle states. Also ensure the Flirc USB has clear line-of-sight to the Harmony Hub's IR blaster.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-soap-501",
+      "integrationId": "eisy-platform",
+      "issue": "SOAP DeviceSpecific command with G_SP (Get Scene Properties) returns HTTP 501 Not Implemented on IoX 6.0 firmware",
+      "resolution": "Scene-level per-member properties are not available via a dedicated API endpoint on IoX 6.0. Instead, read device-level OL (On Level) and RR (Ramp Rate) from the standard status endpoint: GET /rest/status/{addr}. These device-level values ARE the values that UDAC displays as scene properties. Set them via GET /rest/nodes/{addr}/set/OL/{value} or /set/RR/{value}.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-ws-auth",
+      "integrationId": "eisy-platform",
+      "issue": "WebSocket connection to wss://eisy:8443/rest/subscribe fails with 401 Unauthorized when connecting through a development proxy (Vite)",
+      "resolution": "The eisy requires Basic Auth credentials on the HTTP upgrade request itself, not just the post-connect XML authorization message. Browser WebSocket API cannot send custom headers, so a server-side proxy must inject the Authorization header. Solution: Custom Vite plugin using Node's 'ws' package with headers: { Authorization: 'Basic base64(user:pass)' } and agent: new https.Agent({ rejectUnauthorized: false }) for self-signed cert.",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-ws-selfsigned",
+      "integrationId": "eisy-platform",
+      "issue": "Vite's built-in ws:true proxy option fails with ECONNRESET when proxying WebSocket to eisy with self-signed TLS certificate",
+      "resolution": "Vite's http-proxy library performs TLS verification even when secure:false is set for HTTP requests. The ws:true flag doesn't properly propagate the rejectUnauthorized option to the TLS handshake. Solution: Remove ws:true from Vite proxy config and implement a custom configureServer plugin that uses the 'ws' npm package directly, creating a WebSocketServer with noServer:true to accept client connections immediately, then connecting upstream with a custom https.Agent({ rejectUnauthorized: false }).",
+      "resolvedAt": 1740600000000
+    },
+    {
+      "id": "ts-xml-coercion",
+      "integrationId": "eisy-platform",
+      "issue": "fast-xml-parser with parseAttributeValue:true converts numeric-looking XML strings to JavaScript numbers, causing string operations (.replace, .split, .includes) to throw TypeError",
+      "resolution": "Always use String(value) when performing string operations on XML-parsed fields. Example: scene addresses like '56386' become number 56386 after parsing. The address comparison and display code must String() all values. Also affects: node addresses, program IDs, property values. Established pattern: boolAttr() utility for boolean coercion, String() for all address/ID comparisons.",
+      "resolvedAt": 1740600000000
+    }
+  ]
+}

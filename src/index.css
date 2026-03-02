@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-eisy-blue: #2563eb;
+  --color-eisy-blue-dark: #1d4ed8;
+  --color-eisy-green: #16a34a;
+  --color-eisy-amber: #d97706;
+  --color-eisy-red: #dc2626;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* Smooth transitions for dark mode */
+* {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
