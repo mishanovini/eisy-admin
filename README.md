@@ -67,7 +67,7 @@ A modern web console for the **Universal Devices eisy** (IoX) home automation co
 
 ```bash
 # Clone the repository
-git clone https://github.com/mnovini/eisy-admin.git
+git clone https://github.com/mishanovini/eisy-admin.git
 cd eisy-admin
 
 # Install dependencies
@@ -191,6 +191,6 @@ MIT
 
 ## Author
 
-**Misha Novini** -- [LinkedIn](https://www.linkedin.com/in/mishanovini) | [GitHub](https://github.com/mnovini)
+**Misha Novini** -- [LinkedIn](https://www.linkedin.com/in/mishanovini) | [GitHub](https://github.com/mishanovini)
 
 Built with [Claude Code](https://claude.ai/claude-code) by Anthropic.
