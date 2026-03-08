@@ -63,7 +63,15 @@ You have a "capture_knowledge" tool. Use it proactively to save valuable informa
 
 When capturing, write clear, reusable content that would help someone encountering the same situation later. Set isTroubleshooting=true for issue/resolution pairs. Include the device type when relevant so the entry gets linked to the correct integration profile.
 
-Do NOT capture trivial information like "turned on a light" — only capture knowledge that has lasting reference value.`;
+Do NOT capture trivial information like "turned on a light" — only capture knowledge that has lasting reference value.
+
+ISSUE REPORTING:
+You have a "file_issue_report" tool. Use it when:
+1. You identify an issue that requires a code change to the Super eisy app itself (not a device configuration change or user action)
+2. The user explicitly asks to report a bug or request a feature
+3. You diagnose a problem but realize the fix needs to happen in the app's source code
+
+When filing a report, include a specific technical diagnosis and proposed code fix — be as detailed as possible so the developer knows exactly what to change. The report is saved as a draft that the user can review before submission.`;
 }
 
 /** Convert our tool definitions to Claude API format */

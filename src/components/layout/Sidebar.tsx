@@ -11,7 +11,6 @@ import {
   Code2,
   ScrollText,
   Settings,
-  Wifi,
   ChevronLeft,
   ChevronRight,
   Activity,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store.ts';
 import { useKBCaptureStore } from '@/stores/kb-capture-store.ts';
+import { Logo } from '@/components/common/Logo.tsx';
 
 interface NavItem {
   path: string;
@@ -103,11 +103,13 @@ export function Sidebar() {
       >
         {/* Header */}
         <div className="flex h-14 items-center justify-between border-b border-gray-200 px-3 dark:border-gray-800">
-          {sidebarOpen && (
+          {sidebarOpen ? (
             <div className="flex items-center gap-2">
-              <Wifi size={20} className="text-blue-600" />
+              <Logo size={22} />
               <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">eisy</span>
             </div>
+          ) : (
+            <Logo size={20} />
           )}
           <button
             onClick={toggleSidebar}
@@ -163,7 +165,7 @@ export function Sidebar() {
             {/* Mobile header */}
             <div className="flex h-14 items-center justify-between border-b border-gray-200 px-3 dark:border-gray-800">
               <div className="flex items-center gap-2">
-                <Wifi size={20} className="text-blue-600" />
+                <Logo size={22} />
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">eisy</span>
               </div>
               <button

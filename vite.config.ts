@@ -134,12 +134,18 @@ function wsProxyPlugin(): Plugin {
   };
 }
 
+// Read version from package.json at build time
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), renameHtmPlugin(), wsProxyPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   base: '/WEB/console/',
   build: {

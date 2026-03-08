@@ -127,6 +127,12 @@ export async function disableProgram(id: string): Promise<boolean> {
   return resp.ok;
 }
 
+/** Move a program to a different folder */
+export async function moveProgramToFolder(programId: string, folderId: string): Promise<boolean> {
+  const resp = await restGet(`${API.REST_PROGRAMS}/${programId}/set/parent/${folderId}`);
+  return resp.ok;
+}
+
 // ─── Config ───────────────────────────────────────────────────
 
 /** Fetch system configuration */
@@ -153,6 +159,33 @@ export async function fetchStateVariables(): Promise<IsyVariable[]> {
   );
   if (!resp.data) return [];
   return ensureArray(resp.data.vars?.var);
+}
+
+// ─── Event Log ───────────────────────────────────────────────
+
+/**
+ * Fetch the eisy's native event log.
+ * Returns the same data visible in UDAC's Event Viewer — status changes,
+ * link table writes, scene operations, PLM operations, memory writes, etc.
+ *
+ * The raw response from the eisy can vary in structure — it may return
+ * structured XML entries with attributes, or plain-text log lines,
+ * or the raw text of the event buffer. We normalize to a string array
+ * to handle all formats.
+ */
+export async function fetchEventLog(): Promise<string> {
+  const resp = await restGet<unknown>(API.REST_LOG);
+  if (!resp.ok || !resp.raw) return '';
+  // Return the raw XML/text — the eisy event log format is not well-documented
+  // and may return structured XML or plain text depending on firmware version.
+  // The caller (eisy-log-store) will parse it appropriately.
+  return resp.raw;
+}
+
+/** Clear/reset the eisy's event log buffer */
+export async function resetEventLog(): Promise<boolean> {
+  const resp = await restGet(API.REST_LOG + '?reset=true');
+  return resp.ok;
 }
 
 // ─── Error Log ────────────────────────────────────────────────

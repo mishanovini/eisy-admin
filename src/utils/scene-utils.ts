@@ -55,6 +55,28 @@ export function getSceneMembers(
     });
 }
 
+/**
+ * Build a set of device addresses that are already controllers in at least one scene.
+ *
+ * Insteon constraint: a device can only be a controller for one scene.
+ * Use this to disable/hide the "Controller" role option when the device
+ * is already a controller elsewhere.
+ */
+export function getControllerAddresses(scenes: IsyGroup[]): Set<string> {
+  const result = new Set<string>();
+  for (const scene of scenes) {
+    if (!scene.members?.link) continue;
+    const links = Array.isArray(scene.members.link) ? scene.members.link : [scene.members.link];
+    for (const link of links) {
+      // Link @_type 16 = controller in the eisy XML
+      if (link['@_type'] === 16) {
+        result.add(String(link['#text']));
+      }
+    }
+  }
+  return result;
+}
+
 // ─── Ramp Rates + On Levels ───────────────────────────────────
 
 /**

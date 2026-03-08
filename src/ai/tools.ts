@@ -12,6 +12,7 @@ import { getDeviceTypeInfo } from '@/utils/device-types.ts';
 import { formatPropertyValue, formatPropertyName } from '@/utils/labels.ts';
 import { captureKnowledge } from '@/ai/kb-capture.ts';
 import { requestApproval } from '@/stores/action-approval-store.ts';
+import { useIssueStore } from '@/stores/issue-store.ts';
 
 /** Tool definition compatible with both Claude and OpenAI function calling */
 export interface ToolDef {
@@ -98,6 +99,23 @@ export function getToolDefinitions(): ToolDef[] {
           isTroubleshooting: { type: 'boolean', description: 'True if this is a troubleshooting issue/resolution, false for general knowledge' },
         },
         required: ['title', 'content'],
+      },
+    },
+    {
+      name: 'file_issue_report',
+      description:
+        'File a bug report or feature request for the Super eisy app. Use this when you identify an issue that requires a code change to the app itself (not a device configuration or user action), or when the user explicitly wants to report a problem. Include your specific technical diagnosis and proposed solution.',
+      parameters: {
+        type: 'object',
+        properties: {
+          type: { type: 'string', enum: ['bug', 'feature'], description: 'Type of report: bug or feature request' },
+          title: { type: 'string', description: 'Short descriptive title for the issue' },
+          description: { type: 'string', description: 'Detailed description of the issue or feature' },
+          diagnosis: { type: 'string', description: 'Your technical analysis of the root cause' },
+          proposedFix: { type: 'string', description: 'Specific technical solution you recommend (code changes, configuration, etc.)' },
+          affectedDevices: { type: 'array', items: { type: 'string' }, description: 'Names or addresses of affected devices (if applicable)' },
+        },
+        required: ['type', 'title', 'description', 'diagnosis'],
       },
     },
   ];
@@ -306,6 +324,48 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
           isTroubleshooting: args.isTroubleshooting === true,
         });
         return { success: true, message: `Knowledge captured: "${title}"` };
+      }
+
+      case 'file_issue_report': {
+        const issueTitle = String(args.title ?? '');
+        const issueDesc = String(args.description ?? '');
+        const issueType = args.type === 'feature' ? 'feature' as const : 'bug' as const;
+        if (!issueTitle || !issueDesc) {
+          return { success: false, message: 'Title and description are required for issue reports.' };
+        }
+
+        // Resolve affected device names
+        const affectedDevices = Array.isArray(args.affectedDevices) ? args.affectedDevices.map(String) : [];
+        const deviceNames: string[] = [];
+        const deviceAddrs: string[] = [];
+        for (const nameOrAddr of affectedDevices) {
+          const dev = resolveDevice(nameOrAddr);
+          if (dev) {
+            deviceAddrs.push(dev.address);
+            deviceNames.push(dev.name);
+          } else {
+            deviceNames.push(nameOrAddr);
+          }
+        }
+
+        const issueStore = useIssueStore.getState();
+        const systemInfo = issueStore.captureSystemInfo();
+
+        const report = await issueStore.createReport({
+          type: issueType,
+          title: issueTitle,
+          description: issueDesc,
+          aiDiagnosis: args.diagnosis ? String(args.diagnosis) : undefined,
+          proposedFix: args.proposedFix ? String(args.proposedFix) : undefined,
+          devices: deviceAddrs.length > 0 ? deviceAddrs : undefined,
+          deviceNames: deviceNames.length > 0 ? deviceNames : undefined,
+          systemInfo,
+        });
+
+        return {
+          success: true,
+          message: `Issue report draft created: "${issueTitle}" (ID: ${report.id}). The user can review and submit it from the Troubleshooter page → Reports section.`,
+        };
       }
 
       default:

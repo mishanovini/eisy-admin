@@ -80,8 +80,9 @@ async function uploadFile(relPath: string, content: Buffer): Promise<boolean> {
         'Content-Type': 'application/octet-stream',
       },
       body: content,
-      // @ts-expect-error Node/Bun fetch supports this for self-signed certs
-      rejectUnauthorized: false,
+      // Bun: skip TLS verification for self-signed eisy certificate
+      // @ts-expect-error Bun-specific fetch option for self-signed certs
+      tls: { rejectUnauthorized: false },
     });
 
     if (response.ok) {

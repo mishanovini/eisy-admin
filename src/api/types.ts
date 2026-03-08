@@ -158,6 +158,26 @@ export interface ErrorLogEntry {
   '#text'?: string;
 }
 
+/** eisy event log entry (from /rest/log) */
+export interface EisyLogEntry {
+  /** Device/node address */
+  '@_node'?: string;
+  /** ISY control code (ST, DON, DOF, OL, RR, etc.) */
+  '@_control'?: string;
+  /** Action/value */
+  '@_action'?: string | number;
+  /** Timestamp (ISY format) */
+  '@_time'?: string;
+  /** User/task ID */
+  '@_uid'?: string;
+  /** Log type code */
+  '@_type'?: string | number;
+  /** Formatted value */
+  '@_formatted'?: string;
+  /** Text content (for plain-text log lines) */
+  '#text'?: string;
+}
+
 /** Variable (integer or state) */
 export interface IsyVariable {
   '@_type': number;
@@ -227,6 +247,7 @@ export const API = {
   REST_CONFIG: '/rest/config',
   REST_VARS_INT: '/rest/vars/get/1',
   REST_VARS_STATE: '/rest/vars/get/2',
+  REST_LOG: '/rest/log',
   REST_ERROR_LOG: '/rest/log/error',
   REST_QUERY: '/rest/query',
   REST_SCENES: '/rest/nodes/scenes',

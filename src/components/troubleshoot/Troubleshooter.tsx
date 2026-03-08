@@ -23,6 +23,8 @@ import {
   Wrench,
   ClipboardCheck,
   X,
+  Bug,
+  FileText,
 } from 'lucide-react';
 import { useDeviceStore } from '@/stores/device-store.ts';
 import { useStatusStore, type NodeProperties } from '@/stores/status-store.ts';
@@ -32,6 +34,8 @@ import { clearLastError } from '@/api/soap.ts';
 import { getProtocolFamily } from '@/utils/address.ts';
 import { getDeviceTypeInfo } from '@/utils/device-types.ts';
 import type { IsyNode, IsyProperty } from '@/api/types.ts';
+import { IssueReportPanel } from './IssueReportPanel.tsx';
+import { IssueHistory } from './IssueHistory.tsx';
 
 // ─── Diagnoser Callback Registration ─────────────────────────
 
@@ -65,7 +69,7 @@ interface IssueCategoryOption {
   description: string;
 }
 
-type WizardStep = 1 | 2 | 3;
+type WizardStep = 1 | 2 | 3 | 4;
 
 interface ResolutionStep {
   id: number;
@@ -96,6 +100,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
   1: 'Describe Issue',
   2: 'Diagnosis',
   3: 'Resolution',
+  4: 'Report',
 };
 
 const PROTOCOL_LABELS: Record<ProtocolGroup, string> = {
@@ -276,6 +281,8 @@ export function Troubleshooter() {
   const [resolutionSteps, setResolutionSteps] = useState<ResolutionStep[]>([]);
   const [actionResult, setActionResult] = useState('');
   const [actionRunning, setActionRunning] = useState(false);
+  const [showReportPanel, setShowReportPanel] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // ── Derived ──
   const selectedNodes = useMemo(
@@ -460,19 +467,37 @@ export function Troubleshooter() {
             AI-powered diagnostic wizard for device issues
           </p>
         </div>
-        {step !== 1 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={handleReset}
-            className="flex items-center gap-1.5 rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+            onClick={() => setShowHistory(!showHistory)}
+            className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-medium transition-colors ${
+              showHistory
+                ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800'
+            }`}
           >
-            <RefreshCw size={14} /> Start Over
+            <FileText size={14} /> Reports
           </button>
-        )}
+          <button
+            onClick={() => setShowReportPanel(true)}
+            className="flex items-center gap-1.5 rounded border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+          >
+            <Bug size={14} /> Report Issue
+          </button>
+          {step !== 1 && (
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1.5 rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+            >
+              <RefreshCw size={14} /> Start Over
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Step indicators */}
       <div className="flex items-center gap-2">
-        {([1, 2, 3] as WizardStep[]).map((s) => (
+        {([1, 2, 3, 4] as WizardStep[]).map((s) => (
           <button
             key={s}
             onClick={() => {
@@ -903,6 +928,13 @@ export function Troubleshooter() {
                   <Search size={14} />
                   Run Diagnostics Again
                 </button>
+                <button
+                  onClick={() => setStep(4)}
+                  className="flex items-center gap-1.5 rounded border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                >
+                  <Bug size={14} />
+                  Report Issue
+                </button>
               </div>
               {actionResult && (
                 <p className="text-xs text-green-600 dark:text-green-400">{actionResult}</p>
@@ -910,6 +942,76 @@ export function Troubleshooter() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Step 4: Report Issue */}
+      {step === 4 && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+              <Bug size={16} className="text-red-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Report Issue
+              </h3>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Issue not resolved? Submit a detailed report so the developer can investigate and fix it.
+                The AI diagnosis and system data will be included automatically.
+              </p>
+
+              {/* Summary of what will be included */}
+              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Report will include:
+                </h4>
+                <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                  <li>&#8226; AI diagnosis and proposed fix</li>
+                  {selectedNodes.length > 0 && (
+                    <li>&#8226; {selectedNodes.length} affected device{selectedNodes.length !== 1 ? 's' : ''}: {selectedNodes.map((n) => n.name).join(', ')}</li>
+                  )}
+                  <li>&#8226; Recent log entries (last 20)</li>
+                  <li>&#8226; System info (version, device counts, connection state)</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => setShowReportPanel(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700"
+              >
+                <Bug size={16} />
+                Review &amp; Submit Report
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Issue History (toggled from header) */}
+      {showHistory && (
+        <div className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+          <IssueHistory />
+        </div>
+      )}
+
+      {/* Issue Report Panel (modal) */}
+      {showReportPanel && (
+        <IssueReportPanel
+          prefill={{
+            type: 'bug',
+            title: diagnosis ? `${categoryLabel}: ${deviceSummary}` : undefined,
+            description: customDescription || undefined,
+            aiDiagnosis: diagnosis || undefined,
+            category,
+            devices: selectedNodes.map((n) => String(n.address)),
+            deviceNames: selectedNodes.map((n) => n.name),
+          }}
+          onClose={() => setShowReportPanel(false)}
+          onSubmitted={() => {
+            setShowHistory(true);
+          }}
+        />
       )}
     </div>
   );

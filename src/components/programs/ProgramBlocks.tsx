@@ -156,6 +156,8 @@ interface DevicePickerProps {
   value: string;
   onChange: (address: string) => void;
   placeholder?: string;
+  /** When true, only show devices (no scenes). Used for status checks since scenes have no status. */
+  devicesOnly?: boolean;
 }
 
 /** Unified item for the device/scene picker dropdown */
@@ -165,7 +167,7 @@ interface PickerItem {
   kind: 'device' | 'scene';
 }
 
-export function DevicePicker({ value, onChange, placeholder = 'Select device...' }: DevicePickerProps) {
+export function DevicePicker({ value, onChange, placeholder = 'Select device...', devicesOnly = false }: DevicePickerProps) {
   const nodes = useDeviceStore((s) => s.nodes);
   const scenes = useDeviceStore((s) => s.scenes);
   const nodeMap = useDeviceStore((s) => s.nodeMap);
@@ -188,14 +190,16 @@ export function DevicePicker({ value, onChange, placeholder = 'Select device...'
     }
   }, [open]);
 
-  // Merge devices and scenes into a single list
+  // Merge devices and scenes into a single list (optionally exclude scenes)
   const allItems: PickerItem[] = useMemo(() => {
     const items: PickerItem[] = [];
     for (const n of nodes) items.push({ address: String(n.address), name: n.name, kind: 'device' });
-    for (const s of scenes) items.push({ address: String(s.address), name: s.name, kind: 'scene' });
+    if (!devicesOnly) {
+      for (const s of scenes) items.push({ address: String(s.address), name: s.name, kind: 'scene' });
+    }
     items.sort((a, b) => a.name.localeCompare(b.name));
     return items;
-  }, [nodes, scenes]);
+  }, [nodes, scenes, devicesOnly]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return allItems.slice(0, 50);
@@ -242,13 +246,13 @@ export function DevicePicker({ value, onChange, placeholder = 'Select device...'
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search devices & scenes..."
+              placeholder={devicesOnly ? 'Search devices...' : 'Search devices & scenes...'}
               className="flex-1 bg-transparent text-xs text-gray-900 outline-none placeholder:text-gray-400 dark:text-gray-100 dark:placeholder:text-gray-500"
             />
           </div>
-          <div className="max-h-48 overflow-y-auto py-1">
+          <div className="max-h-72 overflow-y-auto py-1">
             {filtered.length === 0 && (
-              <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">No devices or scenes found</div>
+              <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">{devicesOnly ? 'No devices found' : 'No devices or scenes found'}</div>
             )}
             {filtered.map((item) => (
               <button
@@ -327,7 +331,7 @@ export function ProgramPicker({ value, onChange, placeholder = 'Select program..
 
       {open && (
         <div className="absolute left-0 top-full z-30 mt-1 w-56 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-          <div className="max-h-48 overflow-y-auto py-1">
+          <div className="max-h-72 overflow-y-auto py-1">
             {programList.length === 0 && (
               <div className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500">No programs</div>
             )}
@@ -640,6 +644,7 @@ function StatusFields({ condition, onChange }: { condition: StatusCondition; onC
         value={condition.node}
         onChange={(address) => onChange({ node: address })}
         placeholder="Pick device..."
+        devicesOnly
       />
       <div className="grid grid-cols-3 gap-1.5">
         <select

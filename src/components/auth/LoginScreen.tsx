@@ -5,6 +5,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useConnectionStore } from '@/stores/connection-store.ts';
+import { Logo } from '@/components/common/Logo.tsx';
 
 export function LoginScreen() {
   const { connect, status, errorMessage } = useConnectionStore();
@@ -67,6 +68,9 @@ export function LoginScreen() {
     <div className="flex h-full items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
+          <div className="mb-3 flex justify-center">
+            <Logo size={64} />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Super eisy</h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Connect to your Universal Devices eisy

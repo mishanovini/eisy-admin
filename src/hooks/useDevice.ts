@@ -155,7 +155,9 @@ export function useDevice(address: string): UseDeviceResult | null {
       }
     }
 
-    await addLogEntry({
+    // Fire-and-forget logging — don't let IndexedDB errors break the command flow.
+    // The device already toggled; logging is secondary.
+    addLogEntry({
       category: 'command',
       device: address,
       deviceName: node.name,
@@ -163,13 +165,13 @@ export function useDevice(address: string): UseDeviceResult | null {
       source: 'manual',
       result: ok ? 'success' : 'fail',
       rawCommand: `/rest/nodes/${address}/cmd/${command}${value !== undefined ? `/${value}` : ''}`,
-    });
+    }).catch((err) => console.error('[Log] Failed to persist command entry:', err));
     return ok;
   };
 
   const setProperty = async (propId: string, value: number): Promise<boolean> => {
     const ok = await setNodeProperty(address, propId, value);
-    await addLogEntry({
+    addLogEntry({
       category: 'command',
       device: address,
       deviceName: node.name,
@@ -177,7 +179,7 @@ export function useDevice(address: string): UseDeviceResult | null {
       source: 'manual',
       result: ok ? 'success' : 'fail',
       rawCommand: `/rest/nodes/${address}/set/${propId}/${value}`,
-    });
+    }).catch((err) => console.error('[Log] Failed to persist property entry:', err));
     return ok;
   };
 

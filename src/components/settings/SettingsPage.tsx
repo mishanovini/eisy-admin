@@ -28,6 +28,9 @@ import { clearLastError, queryAll } from '@/api/soap.ts';
 import { BackupRestore } from './BackupRestore.tsx';
 import { NotificationSettings } from './NotificationSettings.tsx';
 import { KBCaptureSettings } from './KBCaptureSettings.tsx';
+import { useUpdateStore } from '@/services/update-service.ts';
+import { APP_VERSION } from '@/utils/version.ts';
+import { getGitHubTokenMasked, setGitHubToken, hasGitHubToken, testGitHubConnection } from '@/api/github.ts';
 import { PortalConnection } from './PortalConnection.tsx';
 import { PortalSpokenList } from './PortalSpokenList.tsx';
 import { PortalRoomManager } from './PortalRoomManager.tsx';
@@ -35,6 +38,7 @@ import { PortalActivityLog } from './PortalActivityLog.tsx';
 import { usePortalStore } from '@/stores/portal-store.ts';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog.tsx';
 import { useConfirm } from '@/hooks/useConfirm.ts';
+import { Logo } from '@/components/common/Logo.tsx';
 
 // ─── Provider configuration for API key links and status pages ───
 
@@ -547,6 +551,46 @@ function AboutTab() {
   const purgeOld = useLogStore((s) => s.purgeOld);
   const [purged, setPurged] = useState<number | null>(null);
   const [dialogProps, confirm] = useConfirm();
+  const [checking, setChecking] = useState(false);
+
+  // GitHub PAT state
+  const [patInput, setPatInput] = useState('');
+  const [patSaved, setPatSaved] = useState(false);
+  const [patTesting, setPatTesting] = useState(false);
+  const [patTestResult, setPatTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  // Update store
+  const latestVersion = useUpdateStore((s) => s.latestVersion);
+  const lastChecked = useUpdateStore((s) => s.lastChecked);
+  const updateError = useUpdateStore((s) => s.error);
+
+  const handleCheckUpdate = async () => {
+    setChecking(true);
+    await useUpdateStore.getState().checkForUpdate();
+    setChecking(false);
+  };
+
+  const handleSavePat = () => {
+    setGitHubToken(patInput.trim());
+    setPatInput('');
+    setPatSaved(true);
+    setTimeout(() => setPatSaved(false), 2000);
+  };
+
+  const handleClearPat = () => {
+    setGitHubToken('');
+    setPatTestResult(null);
+    setPatSaved(true);
+    setTimeout(() => setPatSaved(false), 2000);
+  };
+
+  const handleTestPat = async () => {
+    setPatTesting(true);
+    setPatTestResult(null);
+    const result = await testGitHubConnection();
+    setPatTestResult(result);
+    setPatTesting(false);
+  };
 
   const handlePurge = async () => {
     const ok = await confirm({
@@ -567,7 +611,7 @@ function AboutTab() {
 
       <div className="rounded-xl border border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-          <Info size={16} className="text-blue-500" />
+          <Logo size={18} />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">About Super eisy</h3>
         </div>
         <div className="space-y-3 p-4 text-sm">
@@ -576,9 +620,34 @@ function AboutTab() {
             Replaces the legacy Java Admin Console with a modern web interface.
           </p>
           <div className="space-y-1 text-gray-500 dark:text-gray-400">
-            <p>Version: 0.1.0</p>
+            <p>Version: v{APP_VERSION}</p>
             <p>License: MIT</p>
             <p>Stack: React + TypeScript + Tailwind + Zustand</p>
+          </div>
+
+          {/* Update check */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleCheckUpdate}
+              disabled={checking}
+              className="flex items-center gap-1.5 rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              <RefreshCw size={12} className={checking ? 'animate-spin' : ''} />
+              Check for Updates
+            </button>
+            {latestVersion && (
+              <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                v{latestVersion} available!
+              </span>
+            )}
+            {!latestVersion && lastChecked > 0 && !updateError && (
+              <span className="text-xs text-gray-400">
+                Up to date • checked {new Date(lastChecked).toLocaleTimeString()}
+              </span>
+            )}
+            {updateError && (
+              <span className="text-xs text-red-500">{updateError}</span>
+            )}
           </div>
 
           {/* Developer */}
@@ -628,6 +697,79 @@ function AboutTab() {
               <li>eisy and ISY Portal (my.isy.io) credentials are stored in browser localStorage — do not use on shared computers</li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      {/* GitHub Integration */}
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <Github size={16} className="text-gray-700 dark:text-gray-300" />
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">GitHub Integration</h3>
+        </div>
+        <div className="space-y-3 p-4">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Issue reports can be submitted directly to GitHub. A Personal Access Token (PAT) with <code className="rounded bg-gray-100 px-1 dark:bg-gray-800">issues: write</code> scope is required.
+          </p>
+
+          {/* Current token status */}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500 dark:text-gray-400">Token:</span>
+            {hasGitHubToken() ? (
+              <span className="font-mono text-green-600 dark:text-green-400">{getGitHubTokenMasked()}</span>
+            ) : (
+              <span className="text-gray-400 dark:text-gray-500">Not configured</span>
+            )}
+          </div>
+
+          {/* PAT input */}
+          <div className="flex items-center gap-2">
+            <input
+              type="password"
+              value={patInput}
+              onChange={(e) => setPatInput(e.target.value)}
+              placeholder="github_pat_..."
+              className="flex-1 max-w-sm rounded border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            />
+            <button
+              onClick={handleSavePat}
+              disabled={!patInput.trim()}
+              className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Save
+            </button>
+            {hasGitHubToken() && (
+              <>
+                <button
+                  onClick={handleTestPat}
+                  disabled={patTesting}
+                  className="flex items-center gap-1 rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  {patTesting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                  Test
+                </button>
+                <button
+                  onClick={handleClearPat}
+                  className="rounded border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                >
+                  Clear
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Status messages */}
+          {patSaved && (
+            <p className="text-xs text-green-600 dark:text-green-400">Token updated successfully</p>
+          )}
+          {patTestResult && (
+            <p className={`text-xs ${patTestResult.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              {patTestResult.ok ? '✓' : '✗'} {patTestResult.message}
+            </p>
+          )}
+
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Stored in localStorage. Create a <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">fine-grained PAT</a> with <em>Issues: Read &amp; Write</em> permission.
+          </p>
         </div>
       </div>
 

@@ -293,6 +293,7 @@ interface KnowledgeState {
 
   // Troubleshooting
   addTroubleshooting: (data: Omit<TroubleshootingEntry, 'id' | 'resolvedAt'>) => Promise<string>;
+  updateTroubleshooting: (id: string, data: Partial<TroubleshootingEntry>) => Promise<void>;
   deleteTroubleshooting: (id: string) => Promise<void>;
 
   // Config location
@@ -443,6 +444,17 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
     await dbPut('troubleshooting', item);
     set((s) => ({ troubleshooting: [...s.troubleshooting, item] }));
     return item.id;
+  },
+
+  updateTroubleshooting: async (id, data) => {
+    const state = get();
+    const existing = state.troubleshooting.find((t) => t.id === id);
+    if (!existing) return;
+    const updated: TroubleshootingEntry = { ...existing, ...data, id };
+    await dbPut('troubleshooting', updated);
+    set((s) => ({
+      troubleshooting: s.troubleshooting.map((t) => (t.id === id ? updated : t)),
+    }));
   },
 
   deleteTroubleshooting: async (id) => {

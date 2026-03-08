@@ -1,6 +1,10 @@
 /**
  * Hierarchical folder/device/scene tree.
  * Reads tree from device-store, renders TreeNode recursively.
+ *
+ * Supports drag & drop:
+ * - Device/scene nodes can be dragged onto scene nodes (add to scene)
+ * - Device/scene nodes can be dragged onto folder nodes (move to folder)
  */
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { RefreshCw, Search } from 'lucide-react';
@@ -11,9 +15,13 @@ import type { TreeItem } from '@/stores/device-store.ts';
 interface DeviceTreeProps {
   selectedAddress: string | null;
   onSelect: (address: string, type: 'node' | 'scene' | 'folder') => void;
+  /** Called when a device node is dropped onto a scene node */
+  onDropOnScene?: (nodeAddress: string, nodeName: string, sceneAddress: string, sceneName: string) => void;
+  /** Called when a device/scene is dropped onto a folder (to move it) */
+  onMoveToFolder?: (itemAddress: string, itemName: string, itemType: 'node' | 'scene', folderAddress: string) => void;
 }
 
-export function DeviceTree({ selectedAddress, onSelect }: DeviceTreeProps) {
+export function DeviceTree({ selectedAddress, onSelect, onDropOnScene, onMoveToFolder }: DeviceTreeProps) {
   const tree = useDeviceStore((s) => s.tree);
   const loading = useDeviceStore((s) => s.loading);
   const fetchAll = useDeviceStore((s) => s.fetchAll);
@@ -116,6 +124,8 @@ export function DeviceTree({ selectedAddress, onSelect }: DeviceTreeProps) {
             onSelect={onSelect}
             expandedFolders={filter ? new Set(getAllAddresses(filteredTree)) : expandedFolders}
             onToggleFolder={toggleFolder}
+            onDropOnScene={onDropOnScene}
+            onMoveToFolder={onMoveToFolder}
           />
         ))}
       </div>

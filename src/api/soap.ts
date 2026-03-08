@@ -347,6 +347,82 @@ function extractTag(xml: string, tag: string): string | null {
   return m?.[1] ?? null;
 }
 
+// ─── Node/Scene/Folder Creation ──────────────────────────────
+
+/**
+ * Add a new node/device to the eisy.
+ * @param address - Insteon address in "XX.XX.XX" format (converted to "XX XX XX 1" for SOAP)
+ * @param name - Display name for the device
+ * @param ntype - Node type (default 1 = generic Insteon device)
+ * @param family - Device family (default 1 = Insteon)
+ */
+export async function addNode(
+  address: string,
+  name: string,
+  ntype = 1,
+  family = 1,
+): Promise<SoapResult> {
+  // Convert "1A.2B.3C" → "1A 2B 3C 1"
+  const soapAddr = address.replace(/\./g, ' ') + ' 1';
+  const resp = await soapCall('AddNode', SOAP_SERVICE.INSTEON, `
+      <id>${escXml(soapAddr)}</id>
+      <name>${escXml(name)}</name>
+      <ntype>${ntype}</ntype>
+      <family>${family}</family>
+      <flag>0</flag>`);
+  return toSoapResult(resp);
+}
+
+/**
+ * Create a new scene/group on the eisy.
+ * @param address - Scene address (numeric string, e.g. "30001")
+ * @param name - Display name for the scene
+ */
+export async function addGroup(
+  address: string,
+  name: string,
+): Promise<SoapResult> {
+  const resp = await soapCall('AddGroup', SOAP_SERVICE.INSTEON, `
+      <id>${escXml(address)}</id>
+      <name>${escXml(name)}</name>
+      <flag>16</flag>`);
+  return toSoapResult(resp);
+}
+
+/**
+ * Add a node as a member of a scene/group.
+ * @param nodeAddress - Address of the device to add
+ * @param groupAddress - Address of the scene/group
+ * @param role - 'controller' (flag=16) or 'responder' (flag=0)
+ */
+export async function moveNode(
+  nodeAddress: string,
+  groupAddress: string,
+  role: 'controller' | 'responder' = 'responder',
+): Promise<SoapResult> {
+  const flag = role === 'controller' ? 16 : 0;
+  const resp = await soapCall('MoveNode', SOAP_SERVICE.INSTEON, `
+      <id>${escXml(String(nodeAddress))}</id>
+      <name>${escXml(String(groupAddress))}</name>
+      <flag>${flag}</flag>`);
+  return toSoapResult(resp);
+}
+
+/**
+ * Create a new folder in the device tree.
+ * @param folderId - Folder ID (numeric string)
+ * @param name - Display name for the folder
+ */
+export async function addFolder(
+  folderId: string,
+  name: string,
+): Promise<SoapResult> {
+  const resp = await soapCall('AddFolder', SOAP_SERVICE.INSTEON, `
+      <id>${escXml(folderId)}</id>
+      <name>${escXml(name)}</name>`);
+  return toSoapResult(resp);
+}
+
 // ─── Z-Wave Config ────────────────────────────────────────────
 
 /** Read a Z-Wave configuration parameter */
@@ -386,5 +462,19 @@ export async function clearLastError(): Promise<SoapResult> {
 /** Query all device statuses */
 export async function queryAll(): Promise<SoapResult> {
   const resp = await soapCall('QueryAll', SOAP_SERVICE.INSTEON, '');
+  return toSoapResult(resp);
+}
+
+/**
+ * Set the eisy's event log debug level.
+ * Matches UDAC Event Viewer's Level dropdown:
+ *   0 = None (no logging)
+ *   1 = Status/Operational (default — status changes, scene ops, link writes)
+ *   2 = More Info (adds scheduler events, trigger evaluations)
+ *   3 = Device Communications (full Insteon packet detail, hop counts, raw PLM)
+ */
+export async function setDebugLevel(level: 0 | 1 | 2 | 3): Promise<SoapResult> {
+  const resp = await soapCall('SetDebugLevel', SOAP_SERVICE.INSTEON,
+    `<option>${level}</option>`);
   return toSoapResult(resp);
 }

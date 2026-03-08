@@ -1,7 +1,11 @@
 /**
  * Hierarchical program list — folders and programs with status indicators.
+ *
+ * Supports drag & drop:
+ * - Programs are draggable
+ * - Folder nodes accept program drops (move to folder)
  */
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, type DragEvent } from 'react';
 import {
   ChevronRight,
   ChevronDown,
@@ -17,9 +21,18 @@ import { useProgramStore } from '@/stores/program-store.ts';
 import { boolAttr } from '@/utils/xml-parser.ts';
 import type { IsyProgram } from '@/api/types.ts';
 
+/** Data attached to a drag event when dragging a program tree item */
+export interface DragProgramData {
+  id: string;
+  name: string;
+  isFolder: boolean;
+}
+
 interface ProgramListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Called when a program is dropped onto a folder */
+  onMoveToFolder?: (programId: string, programName: string, folderId: string) => void;
 }
 
 interface ProgramTreeItem {
@@ -27,7 +40,7 @@ interface ProgramTreeItem {
   children: ProgramTreeItem[];
 }
 
-export function ProgramList({ selectedId, onSelect }: ProgramListProps) {
+export function ProgramList({ selectedId, onSelect, onMoveToFolder }: ProgramListProps) {
   const programs = useProgramStore((s) => s.programs);
   const loading = useProgramStore((s) => s.loading);
   const fetchAll = useProgramStore((s) => s.fetchAll);
@@ -130,6 +143,7 @@ export function ProgramList({ selectedId, onSelect }: ProgramListProps) {
             onSelect={onSelect}
             expandedFolders={filter ? allIds : expandedFolders}
             onToggleFolder={toggleFolder}
+            onMoveToFolder={onMoveToFolder}
           />
         ))}
       </div>
@@ -144,6 +158,7 @@ function ProgramTreeNode({
   onSelect,
   expandedFolders,
   onToggleFolder,
+  onMoveToFolder,
 }: {
   item: ProgramTreeItem;
   depth: number;
@@ -151,12 +166,72 @@ function ProgramTreeNode({
   onSelect: (id: string) => void;
   expandedFolders: Set<string>;
   onToggleFolder: (id: string) => void;
+  onMoveToFolder?: (programId: string, programName: string, folderId: string) => void;
 }) {
   const prog = item.program;
   const isFolder = boolAttr(prog['@_folder']);
   const isExpanded = expandedFolders.has(prog['@_id']);
   const isSelected = selectedId === prog['@_id'];
   const hasChildren = item.children.length > 0;
+  const [dropTarget, setDropTarget] = useState(false);
+
+  // ─── Drag handlers (programs are draggable, not folders) ──
+  const isDraggable = !isFolder;
+
+  const handleDragStart = (e: DragEvent<HTMLButtonElement>) => {
+    if (!isDraggable) return;
+    const data: DragProgramData = {
+      id: prog['@_id'],
+      name: prog.name,
+      isFolder: false,
+    };
+    e.dataTransfer.setData('application/x-isy-program', JSON.stringify(data));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  // ─── Drop handlers (folders accept program drops) ─────────
+  const handleDragOver = (e: DragEvent<HTMLButtonElement>) => {
+    if (!isFolder) return;
+    if (!e.dataTransfer.types.includes('application/x-isy-program')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropTarget(true);
+  };
+
+  const handleDragLeave = () => {
+    setDropTarget(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setDropTarget(false);
+
+    const raw = e.dataTransfer.getData('application/x-isy-program');
+    if (!raw) return;
+
+    try {
+      const data: DragProgramData = JSON.parse(raw);
+      // Don't drop on self
+      if (data.id === prog['@_id']) return;
+      // Don't move folders (only programs)
+      if (data.isFolder) return;
+
+      if (onMoveToFolder) {
+        onMoveToFolder(data.id, data.name, prog['@_id']);
+      }
+    } catch {
+      // Invalid drag data — ignore
+    }
+  };
+
+  // Determine button styling
+  let buttonClass = 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800';
+  if (isSelected) {
+    buttonClass = 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+  }
+  if (dropTarget) {
+    buttonClass = 'bg-amber-100 ring-2 ring-amber-400 ring-inset text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 dark:ring-amber-500';
+  }
 
   return (
     <div>
@@ -165,11 +240,12 @@ function ProgramTreeNode({
           if (isFolder && hasChildren) onToggleFolder(prog['@_id']);
           onSelect(prog['@_id']);
         }}
-        className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-sm transition-colors ${
-          isSelected
-            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-        }`}
+        draggable={isDraggable}
+        onDragStart={isDraggable ? handleDragStart : undefined}
+        onDragOver={isFolder ? handleDragOver : undefined}
+        onDragLeave={isFolder ? handleDragLeave : undefined}
+        onDrop={isFolder ? handleDrop : undefined}
+        className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-sm transition-colors ${buttonClass}`}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
         title={prog.name}
       >
@@ -218,6 +294,7 @@ function ProgramTreeNode({
               onSelect={onSelect}
               expandedFolders={expandedFolders}
               onToggleFolder={onToggleFolder}
+              onMoveToFolder={onMoveToFolder}
             />
           ))}
         </div>

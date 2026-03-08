@@ -22,7 +22,12 @@ import { SearchPalette } from '@/components/common/SearchPalette.tsx';
 import { AIChatPanel } from '@/components/ai/AIChatPanel.tsx';
 import { IconLegend } from '@/components/common/IconLegend.tsx';
 import { KBCaptureToast } from '@/components/common/KBCaptureToast.tsx';
+import { SceneWriteToast } from '@/components/common/SceneWriteToast.tsx';
 import { ActionApprovalOverlay } from '@/components/common/ActionApprovalOverlay.tsx';
+import { UpdateBanner } from '@/components/common/UpdateBanner.tsx';
+import { useUpdateStore } from '@/services/update-service.ts';
+import { useIssueStore } from '@/stores/issue-store.ts';
+import { useEisyLogStore } from '@/stores/eisy-log-store.ts';
 
 // Page components (placeholder implementations until their blocks)
 import { DashboardPage } from '@/components/dashboard/Dashboard.tsx';
@@ -68,6 +73,15 @@ export function AppShell() {
       fetchPrograms();
       // Auto-restore portal connection if credentials were saved
       usePortalStore.getState().restore();
+      // Check for app updates on startup (non-blocking)
+      useUpdateStore.getState().checkForUpdate();
+      // Load issue reports and sync statuses from GitHub (non-blocking)
+      useIssueStore.getState().loadReports().then(() => {
+        useIssueStore.getState().syncStatuses();
+      });
+      // Initialize eisy event log capture — sets debug level + single fetch.
+      // Continuous polling only happens while the Logs page is open.
+      useEisyLogStore.getState().init(1);
     }
   }, [status, fetchDevices, fetchStatus, fetchPrograms]);
 
@@ -82,6 +96,7 @@ export function AppShell() {
         <Sidebar />
         <div className="relative flex flex-1 flex-col overflow-hidden">
           <TopBar />
+          <UpdateBanner />
           <SearchPalette />
           <main className="flex-1 overflow-y-auto p-3 sm:p-4">
             <Routes>
@@ -103,6 +118,7 @@ export function AppShell() {
       <StatusBar />
       <AIChatPanel />
       <IconLegend />
+      <SceneWriteToast />
       <KBCaptureToast />
       <ActionApprovalOverlay />
     </div>

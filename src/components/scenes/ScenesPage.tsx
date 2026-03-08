@@ -1,16 +1,18 @@
 /**
- * Scenes page — list of all scenes with detail panel.
+ * Scenes page — list of all scenes with detail panel and scene creation.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Layers, Search } from 'lucide-react';
+import { Layers, Search, Plus } from 'lucide-react';
 import { useDeviceStore } from '@/stores/device-store.ts';
 import { SceneDetail } from './SceneDetail.tsx';
+import { CreateSceneModal } from './CreateSceneModal.tsx';
 
 export function ScenesPage() {
   const scenes = useDeviceStore((s) => s.scenes);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Handle ?select=ADDRESS from search palette
@@ -18,21 +20,39 @@ export function ScenesPage() {
     const selectAddr = searchParams.get('select');
     if (selectAddr) {
       setSelectedAddress(String(selectAddr));
-      // Clear the param so refresh doesn't re-select
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
 
+  // Sort scenes alphabetically by name
+  const sortedScenes = useMemo(
+    () => [...scenes].sort((a, b) => a.name.localeCompare(b.name)),
+    [scenes],
+  );
+
   const filteredScenes = filter.trim()
-    ? scenes.filter((s) => s.name.toLowerCase().includes(filter.toLowerCase()))
-    : scenes;
+    ? sortedScenes.filter((s) => s.name.toLowerCase().includes(filter.toLowerCase()))
+    : sortedScenes;
 
   return (
     <div className="-m-4 flex h-[calc(100%+2rem)]">
       {/* Scene list */}
       <div className="w-72 flex-shrink-0 border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
         <div className="flex h-full flex-col">
-          {/* Header */}
+          {/* Header with Create button */}
+          <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Scenes</span>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+              title="Create Scene"
+            >
+              <Plus size={14} />
+              Create
+            </button>
+          </div>
+
+          {/* Filter */}
           <div className="border-b border-gray-200 px-3 py-2 dark:border-gray-700">
             <div className="relative">
               <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -90,9 +110,26 @@ export function ScenesPage() {
           <div className="flex h-full flex-col items-center justify-center text-gray-400 dark:text-gray-500">
             <Layers size={48} className="mb-3 opacity-40" />
             <p className="text-sm">Select a scene to view details</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="mt-3 flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
+            >
+              <Plus size={14} />
+              Create Scene
+            </button>
           </div>
         )}
       </div>
+
+      {/* Create Scene Modal */}
+      <CreateSceneModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={(addr) => {
+          setSelectedAddress(addr);
+          setShowCreateModal(false);
+        }}
+      />
     </div>
   );
 }
