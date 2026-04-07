@@ -34,7 +34,10 @@
 - `bun run deploy:dry` — Dry-run deploy
 
 ## Environment
-- eisy device: `192.168.4.123:8443`, Basic Auth `admin/admin`
-- Vite proxies: `/rest/*`, `/services/*`, `/program/*`, `/file/*`
+- eisy device connection is auto-discovered at dev startup and persisted to `.env`
+- Configure manually via `.env`: `VITE_EISY_HOST`, `VITE_EISY_PORT`, `VITE_EISY_PROTOCOL`, `VITE_EISY_USER`, `VITE_EISY_PASS`
+- Default: `192.168.4.123`, port auto-discovered (known ports: 8443, 8080, 443, 80), Basic Auth `admin/admin`
+- Vite proxies: `/rest/*`, `/services/*`, `/program/*`, `/file/*` → eisy (auto-configured)
 - WebSocket: `/rest/subscribe` proxied with self-signed cert support
 - Portal API: `https://my.isy.io/api/*`
+- Port discovery: `scripts/discover-eisy.ts` (Node), `src/utils/discover-eisy.ts` (browser)

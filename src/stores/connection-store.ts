@@ -50,8 +50,8 @@ function loadFromStorage(): Partial<ConnectionConfig> | null {
 
 export const useConnectionStore = create<ConnectionState>((set, get) => ({
   host: '',
-  port: 8443,
-  protocol: 'https',
+  port: parseInt(import.meta.env.VITE_EISY_PORT || '8443', 10),
+  protocol: (import.meta.env.VITE_EISY_PROTOCOL || 'https') as 'http' | 'https',
   username: 'admin',
   password: 'admin',
   status: 'disconnected',

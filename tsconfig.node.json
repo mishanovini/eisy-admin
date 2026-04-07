@@ -13,5 +13,5 @@
     "noUnusedParameters": true,
     "isolatedModules": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "scripts/discover-eisy.ts", "scripts/update-env.ts"]
 }

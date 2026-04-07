@@ -2,14 +2,19 @@
  * Deploy script — builds the project and uploads it to the eisy device.
  *
  * Usage:
- *   bun run scripts/deploy.ts [--host HOST] [--user USER] [--pass PASS] [--dry-run]
+ *   bun run scripts/deploy.ts [--host HOST] [--port PORT] [--protocol PROTOCOL] [--user USER] [--pass PASS] [--dry-run]
  *
- * The built files are uploaded to /WEB/console/ on the eisy,
- * making the app available at https://{host}:8443/WEB/console/index.htm
+ * Connection settings are resolved in priority order:
+ *   1. CLI arguments (--host, --port, --protocol, --user, --pass)
+ *   2. .env file (VITE_EISY_HOST, VITE_EISY_PORT, etc.)
+ *   3. Auto-discovery (probes known ports)
+ *   4. Hardcoded fallbacks
  */
 import { execSync } from 'child_process';
-import { readdirSync, readFileSync, statSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import { join, relative, posix } from 'path';
+import { discoverEisy, formatDiagnostics } from './discover-eisy.ts';
+import { readEnvFile, updateEnvFile } from './update-env.ts';
 
 // ─── CLI Args ─────────────────────────────────────────────────
 
@@ -21,11 +26,70 @@ function getArg(name: string, fallback: string): string {
 }
 const dryRun = args.includes('--dry-run');
 
-const HOST = getArg('host', '192.168.4.123');
-const PORT = '8443';
-const USER = getArg('user', 'admin');
-const PASS = getArg('pass', 'admin');
-const BASE_URL = `https://${HOST}:${PORT}`;
+// Load .env for defaults
+const envPath = join(import.meta.dir, '..', '.env');
+const envVars = readEnvFile(envPath);
+
+const HOST = getArg('host', envVars.VITE_EISY_HOST || '192.168.4.123');
+const CLI_PORT = getArg('port', '');
+const CLI_PROTOCOL = getArg('protocol', '');
+const USER = getArg('user', envVars.VITE_EISY_USER || 'admin');
+const PASS = getArg('pass', envVars.VITE_EISY_PASS || 'admin');
+
+// Resolve port: CLI > .env > auto-discovery
+let activePort: number;
+let activeProtocol: string;
+
+if (CLI_PORT) {
+  activePort = parseInt(CLI_PORT, 10);
+  activeProtocol = CLI_PROTOCOL || envVars.VITE_EISY_PROTOCOL || 'https';
+} else if (envVars.VITE_EISY_PORT) {
+  activePort = parseInt(envVars.VITE_EISY_PORT, 10);
+  activeProtocol = CLI_PROTOCOL || envVars.VITE_EISY_PROTOCOL || 'https';
+  // Verify the .env port still works, fall back to discovery if not
+  console.log(`[eisy] Verifying .env port ${activeProtocol}://${HOST}:${activePort}...`);
+  const verification = await discoverEisy({
+    host: HOST, username: USER, password: PASS,
+    preferredPort: activePort, preferredProtocol: activeProtocol as 'http' | 'https',
+    timeout: 3000,
+  });
+  if (verification.found) {
+    activePort = verification.port;
+    activeProtocol = verification.protocol;
+    if (String(activePort) !== envVars.VITE_EISY_PORT || activeProtocol !== envVars.VITE_EISY_PROTOCOL) {
+      console.log(`[eisy] Port changed: ${envVars.VITE_EISY_PROTOCOL}://${HOST}:${envVars.VITE_EISY_PORT} → ${activeProtocol}://${HOST}:${activePort}`);
+      updateEnvFile(envPath, {
+        VITE_EISY_PORT: String(activePort),
+        VITE_EISY_PROTOCOL: activeProtocol,
+      });
+    }
+  } else {
+    console.error(formatDiagnostics(HOST, verification.probeResults));
+    process.exit(1);
+  }
+} else {
+  // No port anywhere — discover
+  console.log(`[eisy] No port configured. Discovering...`);
+  const result = await discoverEisy({ host: HOST, username: USER, password: PASS, timeout: 3000 });
+  if (result.found) {
+    activePort = result.port;
+    activeProtocol = result.protocol;
+    console.log(`[eisy] ✓ Found REST API at ${activeProtocol}://${HOST}:${activePort}`);
+    updateEnvFile(envPath, {
+      VITE_EISY_HOST: HOST,
+      VITE_EISY_PORT: String(activePort),
+      VITE_EISY_PROTOCOL: activeProtocol,
+      VITE_EISY_USER: USER,
+      VITE_EISY_PASS: PASS,
+    });
+  } else {
+    console.error(formatDiagnostics(HOST, result.probeResults));
+    console.error('\nUse --host, --port, and --protocol to specify manually.');
+    process.exit(1);
+  }
+}
+
+const BASE_URL = `${activeProtocol}://${HOST}:${activePort}`;
 const UPLOAD_PATH = '/file/upload/WEB/console';
 const DIST_DIR = join(import.meta.dir, '..', 'dist');
 
