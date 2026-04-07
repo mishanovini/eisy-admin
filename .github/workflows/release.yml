@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag_override:
+        description: 'Version tag (e.g. v0.2.0) — defaults to latest git tag'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Determine version
+        id: version
+        env:
+          TAG_OVERRIDE: ${{ github.event.inputs.tag_override }}
+        run: |
+          if [ -n "$TAG_OVERRIDE" ]; then
+            echo "tag=$TAG_OVERRIDE" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create release zip
+        env:
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: cd dist && zip -r "../super-eisy-${VERSION_TAG}.zip" .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Super eisy ${{ steps.version.outputs.tag }}
+          files: super-eisy-${{ steps.version.outputs.tag }}.zip
+          body: |
+            ## Install Super eisy on your eisy device
+
+            **No developer tools required.** Just run one command:
+
+            **Windows** (PowerShell):
+            ```
+            powershell -c "irm https://raw.githubusercontent.com/${{ github.repository }}/master/install.ps1 | iex"
+            ```
+
+            **Mac / Linux**:
+            ```
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/master/install.sh | bash
+            ```
+
+            After install, open your browser to `https://<your-eisy-ip>:8443/WEB/console/`
+
+            To update later, just run the same command again.
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.tag, 'rc') || contains(steps.version.outputs.tag, 'beta') }}
