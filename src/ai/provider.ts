@@ -154,7 +154,9 @@ export async function sendChatMessage(userMessage: string): Promise<string> {
       return 'Rate limit exceeded (HTTP 429). Please wait a moment and try again.';
     }
     if (msg.includes('400')) {
-      return `Bad request (HTTP 400). The selected model may not support this request format. Try a different model.`;
+      // Show the actual API error detail so users can diagnose the issue
+      const detail = msg.replace(/.*?400\s*[—–-]\s*/i, '').trim();
+      return `Bad request (HTTP 400)${detail ? `: ${detail}` : '. The selected model may not support this request format. Try a different model.'}`;
     }
     if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
       if (import.meta.env.PROD && provider === 'openai') {
@@ -178,7 +180,9 @@ async function callClaude(
   model: string,
   proxyUrl: string,
 ): Promise<string> {
-  const url = proxyUrl || 'https://api.anthropic.com/v1/messages';
+  // In dev, use Vite proxy so we can read error response bodies (CORS blocks them on direct calls)
+  const defaultUrl = import.meta.env.DEV ? '/claude-api/v1/messages' : 'https://api.anthropic.com/v1/messages';
+  const url = proxyUrl || defaultUrl;
 
   // Convert messages to Claude format (no system role in messages)
   const claudeMessages = messages.map((m) => ({
@@ -186,6 +190,13 @@ async function callClaude(
     content: m.content,
   }));
 
+  const requestBody = {
+    model: model || 'claude-sonnet-4-6',
+    max_tokens: 2048,
+    system,
+    messages: claudeMessages,
+    tools: toClaudeTools(tools),
+  };
   let response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -194,76 +205,76 @@ async function callClaude(
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
-    body: JSON.stringify({
-      model: model || 'claude-sonnet-4-6',
-      max_tokens: 2048,
-      system,
-      messages: claudeMessages,
-      tools: toClaudeTools(tools),
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => '');
+    const errorBody = await response.text().catch(() => '(could not read response body)');
     let detail = '';
     try {
       const parsed = JSON.parse(errorBody);
-      detail = parsed?.error?.message || parsed?.message || '';
-    } catch { /* not JSON */ }
-    throw new Error(`Claude API error: ${response.status}${detail ? ` — ${detail}` : ''}`);
+      detail = parsed?.error?.message || parsed?.message || errorBody;
+    } catch {
+      detail = errorBody || `(empty response body, status ${response.status})`;
+    }
+    throw new Error(`Claude API error: ${response.status} — ${detail}`);
   }
 
   let data = await response.json();
   let textParts: string[] = [];
   let iterations = 0;
 
-  // Tool use loop — Claude may request tool calls
+  // Tool use loop — Claude may request one or more tool calls per response
   while (iterations < 5) {
     iterations++;
-    let hasToolUse = false;
 
+    // Separate text blocks from tool_use blocks
+    const toolUseBlocks = (data.content ?? []).filter((b: { type: string }) => b.type === 'tool_use');
     for (const block of data.content ?? []) {
-      if (block.type === 'text') {
-        textParts.push(block.text);
-      } else if (block.type === 'tool_use') {
-        hasToolUse = true;
-        const result = await executeTool(block.name, block.input);
-        textParts.push(`\n*${result.message}*\n`);
-
-        // Track usage
-        useAIStore.getState().addUsage(data.usage?.input_tokens ?? 0, data.usage?.output_tokens ?? 0);
-
-        // Continue conversation with tool result
-        claudeMessages.push({ role: 'assistant', content: data.content });
-        claudeMessages.push({
-          role: 'user',
-          content: [{ type: 'tool_result', tool_use_id: block.id, content: result.message }] as unknown as string,
-        });
-
-        response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
-          body: JSON.stringify({
-            model: model || 'claude-sonnet-4-6',
-            max_tokens: 2048,
-            system,
-            messages: claudeMessages,
-            tools: toClaudeTools(tools),
-          }),
-        });
-
-        if (!response.ok) throw new Error(`Claude API error: ${response.status}`);
-        data = await response.json();
-        break; // Restart the content block loop with new data
-      }
+      if (block.type === 'text') textParts.push(block.text);
     }
 
-    if (!hasToolUse) break;
+    if (toolUseBlocks.length === 0) break;
+
+    // Execute ALL tool calls and collect results
+    const toolResults: { type: 'tool_result'; tool_use_id: string; content: string }[] = [];
+    for (const block of toolUseBlocks) {
+      const result = await executeTool(block.name, block.input);
+      textParts.push(`\n*${result.message}*\n`);
+      toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result.message });
+    }
+
+    // Track usage
+    useAIStore.getState().addUsage(data.usage?.input_tokens ?? 0, data.usage?.output_tokens ?? 0);
+
+    // Send assistant response + ALL tool results in one follow-up
+    claudeMessages.push({ role: 'assistant', content: data.content });
+    claudeMessages.push({ role: 'user', content: toolResults as unknown as string });
+
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: model || 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        system,
+        messages: claudeMessages,
+        tools: toClaudeTools(tools),
+      }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      let errDetail = '';
+      try { errDetail = JSON.parse(errBody)?.error?.message || errBody; } catch { errDetail = errBody; }
+      throw new Error(`Claude API error: ${response.status}${errDetail ? ` — ${errDetail}` : ''}`);
+    }
+    data = await response.json();
   }
 
   // Track final usage

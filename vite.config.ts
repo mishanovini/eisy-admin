@@ -255,6 +255,13 @@ export default defineConfig(async () => {
           secure: true,
           rewrite: (p: string) => p.replace(/^\/openai-api/, ''),
         },
+        // Claude API proxy — allows reading error response bodies in dev (browser CORS blocks them)
+        '/claude-api': {
+          target: 'https://api.anthropic.com',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (p: string) => p.replace(/^\/claude-api/, ''),
+        },
         // ISY Portal proxy — avoids CORS preflight failure (my.isy.io OPTIONS returns 500)
         '/portal-api': {
           target: 'https://my.isy.io',

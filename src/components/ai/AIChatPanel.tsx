@@ -129,9 +129,19 @@ export function AIChatPanel() {
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
               Hi! I'm your eisy assistant.
             </p>
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              {apiKey ? 'Ask me to control devices, check status, or troubleshoot.' : 'Configure your API key in settings to get started.'}
-            </p>
+            {apiKey ? (
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                Ask me to control devices, check status, or troubleshoot.
+              </p>
+            ) : (
+              <button
+                onClick={() => setShowSettings(true)}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60"
+              >
+                <Settings size={14} />
+                Add your API key to get started
+              </button>
+            )}
             <div className="mt-4 space-y-1.5">
               {['Turn off all lights', 'What devices have low batteries?', 'Run Front Yard Motion'].map((q) => (
                 <button
