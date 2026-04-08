@@ -15,6 +15,7 @@ import { DeviceConfig } from './DeviceConfig.tsx';
 import { InsteonConfigPanel } from './InsteonConfigPanel.tsx';
 import { SceneMembershipPanel } from './SceneMembershipPanel.tsx';
 import { ProgramMembershipPanel } from './ProgramMembershipPanel.tsx';
+import { DeviceHistoryPanel } from './DeviceHistoryPanel.tsx';
 import { ICON_MAP } from '@/components/tree/icon-map.ts';
 import { getProtocolFamily, formatAddress } from '@/utils/address.ts';
 import { getModelName, getZWaveProductName, decodeDeviceMetadata } from '@/utils/device-types.ts';
@@ -283,6 +284,9 @@ export function DeviceDetail({ address }: DeviceDetailProps) {
 
       {/* Program Membership — shows which programs reference this device */}
       <ProgramMembershipPanel address={device.address} />
+
+      {/* Recent Activity — shows what happened and WHO caused it */}
+      <DeviceHistoryPanel address={device.address} />
 
       {/* Configuration parameters (Z-Wave devices) */}
       {protocolFamily === 'zwave' && device.nodeDefId && (

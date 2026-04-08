@@ -108,6 +108,52 @@ async function trimIfNeeded(): Promise<void> {
   }
 }
 
+// ─── Standalone Query (for AI tools and non-React consumers) ─────────────────
+
+/**
+ * Query log entries from IndexedDB without updating React state.
+ * Uses cursor-based pagination (same pattern as loadEntries).
+ * Designed for AI tools, DeviceHistoryPanel, and other non-store consumers.
+ */
+export async function queryLogs(options?: {
+  category?: LogCategory;
+  device?: string;
+  limit?: number;
+  since?: number;
+}): Promise<LogEntry[]> {
+  const db = await getDb();
+  const limit = options?.limit ?? 50;
+  const entries: LogEntry[] = [];
+
+  const tx = db.transaction(STORE_NAME, 'readonly');
+  const index = tx.store.index('timestamp');
+  let cursor = await index.openCursor(null, 'prev');
+
+  while (cursor && entries.length < limit) {
+    const entry = cursor.value as LogEntry;
+
+    // Category filter
+    if (options?.category && entry.category !== options.category) {
+      cursor = await cursor.continue();
+      continue;
+    }
+
+    // Device filter
+    if (options?.device && entry.device !== options.device) {
+      cursor = await cursor.continue();
+      continue;
+    }
+
+    // Since filter (timestamp cutoff)
+    if (options?.since && entry.timestamp < options.since) break;
+
+    entries.push(entry);
+    cursor = await cursor.continue();
+  }
+
+  return entries;
+}
+
 interface LogState {
   /** Recent log entries (in-memory cache for display) */
   entries: LogEntry[];

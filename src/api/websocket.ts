@@ -12,6 +12,7 @@ import { useStatusStore } from '@/stores/status-store.ts';
 import { useLogStore, type LogEntry } from '@/stores/log-store.ts';
 import { useDeviceStore } from '@/stores/device-store.ts';
 import { useProgramStore } from '@/stores/program-store.ts';
+import { attributeSource, registerProgramExecution, getAttributionDetail } from '@/utils/source-attribution.ts';
 
 type WsListener = (event: WsEvent) => void;
 
@@ -196,13 +197,18 @@ function parseWsEvent(xmlText: string): WsEvent | null {
           ? `Turn On${formatted ? ` (${formatted})` : ''}`
           : 'Turn Off';
 
+        // Attribute the source: was this caused by a program, scene, or physical switch?
+        const source = attributeSource(String(node));
+        const detail = getAttributionDetail(source);
+
         safeLog({
           category: 'command',
           device: node,
           deviceName,
           action: actionDesc,
-          source: 'device',
+          source,
           result: 'success',
+          detail,
         });
       }
     }
@@ -226,6 +232,11 @@ function parseWsEvent(xmlText: string): WsEvent | null {
       };
 
       const programAction = loggableStatuses[actionStr];
+
+      // Register program execution for source attribution
+      if (actionStr === '1') registerProgramExecution(String(node), 'then');
+      if (actionStr === '2') registerProgramExecution(String(node), 'else');
+
       if (programAction) {
         // Only log meaningful transitions — skip unknown/noisy codes
         const programInfo = useProgramStore.getState().getProgram(String(node));

@@ -13,6 +13,9 @@ import { formatPropertyValue, formatPropertyName } from '@/utils/labels.ts';
 import { captureKnowledge } from '@/ai/kb-capture.ts';
 import { requestApproval } from '@/stores/action-approval-store.ts';
 import { useIssueStore } from '@/stores/issue-store.ts';
+import { queryLogs } from '@/stores/log-store.ts';
+import { buildNameResolver, humanizeD2DBlock } from '@/utils/program-humanizer.ts';
+import { resolveSourceName } from '@/utils/source-attribution.ts';
 
 /** Tool definition compatible with both Claude and OpenAI function calling */
 export interface ToolDef {
@@ -118,6 +121,43 @@ export function getToolDefinitions(): ToolDef[] {
         required: ['type', 'title', 'description', 'diagnosis'],
       },
     },
+    {
+      name: 'get_program_logic',
+      description:
+        'Get the full logic of a program — its IF conditions, THEN actions, and ELSE actions in human-readable form. Also shows last run/finish times, enabled status, and whether the IF condition is currently true or false.',
+      parameters: {
+        type: 'object',
+        properties: {
+          program: { type: 'string', description: 'Program name or hex ID' },
+        },
+        required: ['program'],
+      },
+    },
+    {
+      name: 'get_recent_events',
+      description:
+        'Get recent events for a device or program from the event log. Shows what happened, when, and WHO caused it (program, scene, manual switch, AI, etc.). Use this to trace why a device changed state.',
+      parameters: {
+        type: 'object',
+        properties: {
+          device: { type: 'string', description: 'Device name or address to filter events for (optional)' },
+          category: { type: 'string', enum: ['command', 'program', 'comms', 'portal', 'scene'], description: 'Filter by event category (optional)' },
+          limit: { type: 'number', description: 'Maximum number of events to return (default: 20)' },
+        },
+      },
+    },
+    {
+      name: 'find_programs_for_device',
+      description:
+        'Find all programs that reference a specific device — both programs triggered BY the device (in IF conditions) and programs that CONTROL the device (in THEN/ELSE actions). Essential for understanding what automates a device.',
+      parameters: {
+        type: 'object',
+        properties: {
+          device: { type: 'string', description: 'Device name or address' },
+        },
+        required: ['device'],
+      },
+    },
   ];
 }
 
@@ -156,6 +196,18 @@ function resolveProgram(nameOrId: string): { id: string; name: string } | null {
     if (prog.name.toLowerCase().includes(lower)) return { id: prog['@_id'], name: prog.name };
   }
   return null;
+}
+
+/** Check if a D2D XML block contains a device address (handles format variants) */
+function containsAddress(d2dBlock: string, address: string): boolean {
+  const block = d2dBlock.toLowerCase();
+  const addr = address.toLowerCase();
+  if (block.includes(addr)) return true;
+  const addrSpaces = addr.replace(/\./g, ' ');
+  if (addrSpaces !== addr && block.includes(addrSpaces)) return true;
+  const addrDots = addr.replace(/ /g, '.');
+  if (addrDots !== addr && block.includes(addrDots)) return true;
+  return false;
 }
 
 /** Execute a tool call and return the result */
@@ -366,6 +418,137 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
           success: true,
           message: `Issue report draft created: "${issueTitle}" (ID: ${report.id}). The user can review and submit it from the Troubleshooter page → Reports section.`,
         };
+      }
+
+      case 'get_program_logic': {
+        const prog = resolveProgram(String(args.program));
+        if (!prog) return { success: false, message: `Program "${args.program}" not found.` };
+
+        const programStore = useProgramStore.getState();
+        const programSummary = programStore.getProgram(prog.id);
+        const decimalId = parseInt(prog.id, 16);
+        const trigger = !isNaN(decimalId) ? programStore.getTrigger(decimalId) : undefined;
+
+        const lines: string[] = [];
+        lines.push(`Program: ${prog.name} (ID ${prog.id})`);
+
+        if (programSummary) {
+          lines.push(`Enabled: ${boolAttr(programSummary['@_enabled']) ? 'Yes' : 'No'}`);
+          lines.push(`IF Condition: ${programSummary['@_status'] === 'true' ? 'TRUE (last ran THEN)' : programSummary['@_status'] === 'false' ? 'FALSE (last ran ELSE)' : 'Unknown'}`);
+          if (programSummary.lastRunTime) lines.push(`Last Run: ${programSummary.lastRunTime}`);
+          if (programSummary.lastFinishTime) lines.push(`Last Finish: ${programSummary.lastFinishTime}`);
+          if (programSummary.nextScheduledRunTime) lines.push(`Next Scheduled: ${programSummary.nextScheduledRunTime}`);
+        }
+
+        if (trigger) {
+          if (trigger.comment) lines.push(`Comment: ${trigger.comment}`);
+
+          // Build name resolver for humanizing D2D blocks
+          const deviceStore = useDeviceStore.getState();
+          const resolver = buildNameResolver(
+            deviceStore.nodeMap,
+            deviceStore.sceneMap ?? new Map(),
+            programStore.programs,
+            programStore.triggers,
+          );
+
+          if (trigger.if) {
+            const ifLines = humanizeD2DBlock(trigger.if, resolver);
+            lines.push('\nIF:');
+            for (const l of ifLines) lines.push(`${'  '.repeat(l.indent + 1)}${l.text}`);
+          }
+          if (trigger.then) {
+            const thenLines = humanizeD2DBlock(trigger.then, resolver);
+            lines.push('\nTHEN:');
+            for (const l of thenLines) lines.push(`${'  '.repeat(l.indent + 1)}${l.text}`);
+          }
+          if (trigger.else) {
+            const elseLines = humanizeD2DBlock(trigger.else, resolver);
+            lines.push('\nELSE:');
+            for (const l of elseLines) lines.push(`${'  '.repeat(l.indent + 1)}${l.text}`);
+          }
+        } else {
+          lines.push('\n(D2D program details not available — program may not have conditions/actions)');
+        }
+
+        return { success: true, message: lines.join('\n') };
+      }
+
+      case 'get_recent_events': {
+        // Resolve device name to address if provided
+        let deviceAddr: string | undefined;
+        if (args.device) {
+          const dev = resolveDevice(String(args.device));
+          deviceAddr = dev?.address ?? String(args.device);
+        }
+
+        const limit = args.limit ? Math.min(Math.max(1, Number(args.limit) || 20), 50) : 20;
+        const entries = await queryLogs({
+          device: deviceAddr,
+          category: args.category as 'command' | 'program' | 'comms' | 'portal' | 'scene' | undefined,
+          limit,
+          since: Date.now() - 24 * 60 * 60 * 1000, // Last 24 hours
+        });
+
+        if (entries.length === 0) {
+          const target = args.device ? ` for "${args.device}"` : '';
+          return { success: true, message: `No recent events found${target} in the last 24 hours.` };
+        }
+
+        const lines = entries.map((e) => {
+          const time = new Date(e.timestamp).toLocaleTimeString();
+          const device = e.deviceName ?? e.device ?? '';
+          const source = resolveSourceName(e.source);
+          return `${time} | ${device} | ${e.action} | Source: ${source}${e.result === 'fail' ? ' [FAILED]' : ''}`;
+        });
+
+        const target = args.device ? ` for "${args.device}"` : '';
+        return { success: true, message: `Recent events${target} (${entries.length}):\n${lines.join('\n')}` };
+      }
+
+      case 'find_programs_for_device': {
+        const dev = resolveDevice(String(args.device));
+        if (!dev) return { success: false, message: `Device "${args.device}" not found.` };
+
+        const addr = dev.address.toLowerCase();
+        const triggers = useProgramStore.getState().triggers;
+        const programs = useProgramStore.getState().programs;
+
+        const results: { name: string; id: string; roles: string[] }[] = [];
+
+        for (const trigger of triggers) {
+          const roles: string[] = [];
+
+          if (trigger.if && containsAddress(trigger.if, addr)) {
+            roles.push('IF condition (triggers this program)');
+          }
+          if (trigger.then && containsAddress(trigger.then, addr)) {
+            roles.push('THEN action (program controls this device)');
+          }
+          if (trigger.else && containsAddress(trigger.else, addr)) {
+            roles.push('ELSE action (program controls this device)');
+          }
+
+          if (roles.length > 0) {
+            const idStr = String(trigger.id);
+            const progSummary = programs.find((p) => p['@_id'] === idStr);
+            const enabled = progSummary ? boolAttr(progSummary['@_enabled']) : true;
+            results.push({
+              name: trigger.name || `Program ${idStr}`,
+              id: idStr,
+              roles: [...roles, enabled ? '(enabled)' : '(disabled)'],
+            });
+          }
+        }
+
+        if (results.length === 0) {
+          return { success: true, message: `No programs reference "${dev.name}".` };
+        }
+
+        const lines = results.map((r) =>
+          `${r.name} (ID ${r.id}): ${r.roles.join(', ')}`,
+        );
+        return { success: true, message: `Programs referencing "${dev.name}" (${results.length}):\n${lines.join('\n')}` };
       }
 
       default:
