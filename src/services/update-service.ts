@@ -16,7 +16,7 @@ import { APP_VERSION } from '@/utils/version.ts';
 
 // ─── Constants ────────────────────────────────────────────────
 
-const GITHUB_OWNER = 'MishaPT';
+const GITHUB_OWNER = 'mishanovini';
 const GITHUB_REPO = 'eisy-admin';
 const STORAGE_KEY = 'eisy-update';
 
