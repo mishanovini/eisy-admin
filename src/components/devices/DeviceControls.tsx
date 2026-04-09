@@ -205,12 +205,12 @@ function DimmerControl({
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <ControlButton
-          onClick={() => onCommand(CMD.DON, 255)}
+          onClick={() => onCommand(CMD.DON)}
           pending={pending}
           active={isOn}
           activeClassName="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-3 py-1.5"
           inactiveClassName="bg-gray-100 text-gray-600 hover:bg-green-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-green-900/20 px-3 py-1.5"
-          title="Turn On (100%)"
+          title="Turn On (uses device's On Level)"
         >
           <Power size={14} /> On
         </ControlButton>

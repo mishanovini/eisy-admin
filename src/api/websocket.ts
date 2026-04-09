@@ -193,9 +193,24 @@ function parseWsEvent(xmlText: string): WsEvent | null {
       if (control === 'DON' || control === 'DOF') {
         const nodeInfo = useDeviceStore.getState().nodeMap.get(String(node));
         const deviceName = nodeInfo?.name ?? node;
-        const actionDesc = control === 'DON'
-          ? `Turn On${formatted ? ` (${formatted})` : ''}`
-          : 'Turn Off';
+
+        // Build a descriptive action: convert byte value (0-255) to percentage for dimmers.
+        // DOF = Turn Off. DON with value 255 = Turn On (100%). DON with 0 = Turn Off.
+        // DON with intermediate value = Dim to N%.
+        let actionDesc: string;
+        if (control === 'DOF') {
+          actionDesc = 'Turn Off';
+        } else {
+          const rawVal = typeof action === 'number' ? action : Number(action);
+          if (isNaN(rawVal) || rawVal >= 255) {
+            actionDesc = 'Turn On';
+          } else if (rawVal === 0) {
+            actionDesc = 'Turn Off';
+          } else {
+            const pct = Math.round((rawVal / 255) * 100);
+            actionDesc = `Dim to ${pct}%`;
+          }
+        }
 
         // Attribute the source: was this caused by a program, scene, or physical switch?
         const source = attributeSource(String(node));

@@ -32,6 +32,7 @@ import { useDeviceStore } from '@/stores/device-store.ts';
 import { useProgramStore } from '@/stores/program-store.ts';
 import { useEisyLogStore, type EisyLogLevel, type EisyLiveEntry } from '@/stores/eisy-log-store.ts';
 import { getSceneMembers } from '@/utils/scene-utils.ts';
+import { resolveSourceName } from '@/utils/source-attribution.ts';
 
 type TabId = 'command' | 'comms' | 'program' | 'portal' | 'eisy' | 'all';
 
@@ -568,8 +569,8 @@ function LogRow({ entry }: { entry: LogEntry }) {
       <td className="max-w-xs truncate px-3 py-1.5 text-gray-700 dark:text-gray-300" title={entry.action !== displayAction ? entry.action : undefined}>
         {displayAction}
       </td>
-      <td className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400">
-        {entry.source}
+      <td className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400" title={entry.source}>
+        {resolveSourceName(entry.source)}
       </td>
       <td className="px-3 py-1.5">
         {entry.result === 'success' && (

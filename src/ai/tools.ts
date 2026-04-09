@@ -136,20 +136,20 @@ export function getToolDefinitions(): ToolDef[] {
     {
       name: 'get_recent_events',
       description:
-        'Get recent events for a device or program from the event log. Shows what happened, when, and WHO caused it (program, scene, manual switch, AI, etc.). Use this to trace why a device changed state.',
+        'Get recent events for a device from the event log. Each event includes the ATTRIBUTED SOURCE (program name, manual, scene, AI, etc.) — this is the DEFINITIVE, DETERMINISTIC answer to "what caused this?" Do NOT guess or speculate — use this tool first for any "why is X on/off?" question. Leads with the most recent event.',
       parameters: {
         type: 'object',
         properties: {
           device: { type: 'string', description: 'Device name or address to filter events for (optional)' },
           category: { type: 'string', enum: ['command', 'program', 'comms', 'portal', 'scene'], description: 'Filter by event category (optional)' },
-          limit: { type: 'number', description: 'Maximum number of events to return (default: 20)' },
+          limit: { type: 'number', description: 'Maximum number of events to return (default: 10)' },
         },
       },
     },
     {
       name: 'find_programs_for_device',
       description:
-        'Find all programs that reference a specific device — both programs triggered BY the device (in IF conditions) and programs that CONTROL the device (in THEN/ELSE actions). Essential for understanding what automates a device.',
+        'List all programs that COULD control or be triggered by a device. This is ONLY for answering "what programs are associated with this device?" — NOT for determining what actually caused a specific state change. For causality questions, use get_recent_events instead which returns the authoritative attributed source.',
       parameters: {
         type: 'object',
         properties: {
@@ -477,12 +477,14 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
       case 'get_recent_events': {
         // Resolve device name to address if provided
         let deviceAddr: string | undefined;
+        let resolvedName: string | undefined;
         if (args.device) {
           const dev = resolveDevice(String(args.device));
           deviceAddr = dev?.address ?? String(args.device);
+          resolvedName = dev?.name;
         }
 
-        const limit = args.limit ? Math.min(Math.max(1, Number(args.limit) || 20), 50) : 20;
+        const limit = args.limit ? Math.min(Math.max(1, Number(args.limit) || 10), 50) : 10;
         const entries = await queryLogs({
           device: deviceAddr,
           category: args.category as 'command' | 'program' | 'comms' | 'portal' | 'scene' | undefined,
@@ -491,19 +493,29 @@ export async function executeTool(name: string, args: Record<string, unknown>): 
         });
 
         if (entries.length === 0) {
-          const target = args.device ? ` for "${args.device}"` : '';
-          return { success: true, message: `No recent events found${target} in the last 24 hours.` };
+          const target = resolvedName ? ` for "${resolvedName}"` : args.device ? ` for "${args.device}"` : '';
+          return { success: true, message: `No recent events found${target} in the last 24 hours. This means either the device has not changed state recently, or the change happened before Super eisy started tracking events this session.` };
         }
 
-        const lines = entries.map((e) => {
+        // Lead with the authoritative answer: the most recent event is THE cause.
+        const mostRecent = entries[0]!;
+        const mostRecentTime = new Date(mostRecent.timestamp).toLocaleString();
+        const mostRecentSource = resolveSourceName(mostRecent.source);
+        const deviceLabel = resolvedName ? `"${resolvedName}"` : (mostRecent.deviceName ?? 'Device');
+
+        const lines: string[] = [];
+        lines.push(`AUTHORITATIVE ANSWER: ${deviceLabel} was last affected at ${mostRecentTime} by ${mostRecentSource} (action: "${mostRecent.action}"). This is the actual recorded cause — not a guess.`);
+        lines.push('');
+        lines.push(`Recent events${args.device ? ` for ${deviceLabel}` : ''} (${entries.length}):`);
+
+        for (const e of entries) {
           const time = new Date(e.timestamp).toLocaleTimeString();
           const device = e.deviceName ?? e.device ?? '';
           const source = resolveSourceName(e.source);
-          return `${time} | ${device} | ${e.action} | Source: ${source}${e.result === 'fail' ? ' [FAILED]' : ''}`;
-        });
+          lines.push(`${time} | ${device} | ${e.action} | ${source}${e.result === 'fail' ? ' [FAILED]' : ''}`);
+        }
 
-        const target = args.device ? ` for "${args.device}"` : '';
-        return { success: true, message: `Recent events${target} (${entries.length}):\n${lines.join('\n')}` };
+        return { success: true, message: lines.join('\n') };
       }
 
       case 'find_programs_for_device': {
